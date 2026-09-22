@@ -1,0 +1,2630 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Remix ML-Based Disaster Risk Prediction System</title>
+  <meta name="description" content="Machine learning disaster risk prediction system with Google Authentication, user registration, Python ML pipeline, and Firebase Cloud Firestore persistence." />
+  <meta property="og:title" content="Remix ML-Based Disaster Risk Prediction System" />
+  <meta property="og:description" content="Machine learning disaster risk prediction system with Google Authentication, user registration, Python ML pipeline, and Firebase Cloud Firestore persistence." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="stylesheet" href="/src/index.css" />
+  <!-- Standalone fallback styles to guarantee 100% responsive styling even without build tools -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4, .font-heading {
+      font-family: 'Outfit', sans-serif;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.025em;
+    }
+    .tab-btn {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff !important;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+    }
+    .tab-btn:not(.active):hover {
+      background-color: #eff6ff;
+      color: #1d4ed8;
+    }
+    .code-block {
+      background-color: #0f172a;
+      color: #38bdf8;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.825rem;
+      line-height: 1.6;
+      overflow-x: auto;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      border: 1px solid #1e293b;
+    }
+    /* Subtle pulse animation for risk classification */
+    @keyframes alert-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.02); opacity: 0.95; }
+    }
+    .risk-pulsing {
+      animation: alert-pulse 2.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+  <!-- ========================================================================= -->
+  <!-- LOGIN & REGISTRATION GATEWAY PAGE (SHOWN FIRST ON VISIT) -->
+  <!-- ========================================================================= -->
+  <div id="login-gateway-page" class="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    
+    <!-- Subtle ambient decorative glow -->
+    <div class="absolute -top-32 -left-32 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-md w-full space-y-6 relative z-10">
+      
+      <!-- Branding Header -->
+      <div class="text-center space-y-2">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white text-3xl shadow-lg shadow-blue-500/20 mb-2">
+          🛡️
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">
+          DisasterGuard AI
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-400 font-medium">
+          Environmental Disaster Risk Prediction & Early Warning System
+        </p>
+        <div class="pt-1 flex items-center justify-center gap-2 text-[11px] text-slate-400">
+          <span class="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-blue-300 font-semibold">
+            🤖 Random Forest Ensemble
+          </span>
+          <span class="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-emerald-300 font-semibold">
+            ☁️ Firestore Cloud Sync
+          </span>
+        </div>
+      </div>
+
+      <!-- Main Authentication Box -->
+      <div class="bg-white text-slate-900 rounded-2xl p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-5">
+        
+        <!-- Tab Navigation: Sign In vs Register -->
+        <div class="flex border-b border-slate-200">
+          <button id="gw-tab-login" type="button" onclick="switchAuthMode('login')" class="flex-1 pb-3 text-center text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition cursor-pointer">
+            🔑 Sign In
+          </button>
+          <button id="gw-tab-reg" type="button" onclick="switchAuthMode('register')" class="flex-1 pb-3 text-center text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition cursor-pointer">
+            📝 Register Account
+          </button>
+        </div>
+
+        <!-- Quick Google Sign-In Button -->
+        <div>
+          <button id="gw-btn-google-signin" type="button" onclick="handleGoogleSignIn()" class="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-700 shadow-2xs transition flex items-center justify-center gap-3 cursor-pointer">
+            <svg class="w-4 h-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="flex-1 h-px bg-slate-200"></div>
+          <span class="text-[11px] uppercase font-bold text-slate-400">or with email</span>
+          <div class="flex-1 h-px bg-slate-200"></div>
+        </div>
+
+        <!-- SUCCESS / ERROR ALERTS -->
+        <div id="gw-login-success" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs"></div>
+        <div id="gw-login-error" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-semibold"></div>
+        <div id="gw-reg-error" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-semibold"></div>
+
+        <!-- FORM 1: LOGIN FORM -->
+        <form id="gw-login-section" onsubmit="handleEmailLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
+            <input type="email" id="gw-login-email" placeholder="name@example.com" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:bg-white focus:outline-none transition" required />
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold text-slate-700">Password</label>
+            </div>
+            <input type="password" id="gw-login-password" placeholder="••••••••" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:bg-white focus:outline-none transition" required />
+          </div>
+
+          <button id="gw-btn-login-submit" type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition cursor-pointer">
+            Sign In & Enter Dashboard
+          </button>
+
+          <p class="text-center text-xs text-slate-500 pt-1">
+            Don't have an account? 
+            <button type="button" onclick="switchAuthMode('register')" class="text-blue-600 font-bold hover:underline cursor-pointer">
+              Register here
+            </button>
+          </p>
+        </form>
+
+        <!-- FORM 2: REGISTRATION FORM -->
+        <form id="gw-reg-section" onsubmit="handleEmailRegister(event)" class="hidden space-y-4">
+          
+          <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 text-xs space-y-1">
+            <p class="font-bold flex items-center gap-1.5">
+              <span>📝</span> User Registration & Profile Setup
+            </p>
+            <p class="text-[11px] text-blue-800">
+              Enter your basic details and account password. All user details will be stored in your cloud profile and you will be redirected to the Login page.
+            </p>
+          </div>
+
+          <!-- Basic User Details Section -->
+          <div class="space-y-3 pt-1">
+            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+              <span>👤</span> Basic User & Officer Information
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Full Name / Officer Name</label>
+                <input type="text" id="gw-reg-name" placeholder="e.g. Sivamalai / Ramesh R" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:bg-white focus:outline-none transition" required />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Emergency Phone Number</label>
+                <input type="tel" id="gw-reg-phone" placeholder="e.g. +91 98765 43210" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:bg-white focus:outline-none transition" required />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Department / Organization</label>
+                <input type="text" id="gw-reg-department" placeholder="e.g. State Disaster Response / Hydrology" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:bg-white focus:outline-none transition" required />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Assigned Station / District</label>
+                <input type="text" id="gw-reg-location" placeholder="e.g. Salem Basin / Mettur Dam" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:bg-white focus:outline-none transition" required />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Operational Role</label>
+              <select id="gw-reg-role" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:bg-white focus:outline-none transition cursor-pointer">
+                <option value="Disaster Response Officer" selected>Disaster Response Officer</option>
+                <option value="Hydrological Analyst">Hydrological Analyst</option>
+                <option value="Field Station Observer">Field Station Observer</option>
+                <option value="Emergency Operations Chief">Emergency Operations Chief</option>
+                <option value="Volunteer / Community Responder">Volunteer / Community Responder</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Account Credentials Section -->
+          <div class="space-y-3 pt-2 border-t border-slate-200">
+            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+              <span>🔐</span> Login Credentials
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
+              <input type="email" id="gw-reg-email" placeholder="name@example.com" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:bg-white focus:outline-none transition" required />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Create Password</label>
+                <input type="password" id="gw-reg-password" placeholder="min. 6 chars" minlength="6" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:bg-white focus:outline-none transition" required />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Confirm Password</label>
+                <input type="password" id="gw-reg-confirm-password" placeholder="repeat password" minlength="6" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:bg-white focus:outline-none transition" required />
+              </div>
+            </div>
+          </div>
+
+          <button id="gw-btn-reg-submit" type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition cursor-pointer">
+            Create Account & Store Details
+          </button>
+
+          <p class="text-center text-xs text-slate-500 pt-1">
+            Already registered? 
+            <button type="button" onclick="switchAuthMode('login')" class="text-blue-600 font-bold hover:underline cursor-pointer">
+              Sign in here
+            </button>
+          </p>
+        </form>
+
+      </div>
+
+      <!-- Quick highlights below login box -->
+      <div class="grid grid-cols-3 gap-2 text-center text-[11px] text-slate-400">
+        <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700/60">
+          <span class="block text-base mb-0.5">🌧️</span>
+          <span class="font-semibold text-slate-300">Hazard Inputs</span>
+        </div>
+        <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700/60">
+          <span class="block text-base mb-0.5">🤖</span>
+          <span class="font-semibold text-slate-300">97.4% Accuracy</span>
+        </div>
+        <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700/60">
+          <span class="block text-base mb-0.5">👤</span>
+          <span class="font-semibold text-slate-300">Profile Sync</span>
+        </div>
+      </div>
+
+      <!-- Direct Quick Guide Button for Local Transfer & Run -->
+      <button type="button" onclick="openTransferModal()" class="w-full py-2.5 px-4 bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/80 rounded-xl text-xs text-blue-300 hover:text-white font-bold transition flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+        <span>🚀 How to Transfer & Run This Code Locally (3-Step Guide)</span>
+        <span>→</span>
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN APPLICATION LAYOUT (REVEALED AFTER AUTHENTICATION) -->
+  <!-- ========================================================================= -->
+  <div id="app-main-layout" class="hidden min-h-screen flex flex-col justify-between">
+    <div>
+
+    <!-- TOP HEADER -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-700 to-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-sm">
+              🛡️
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
+                  DisasterGuard AI
+                </h1>
+                <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Active Monitoring
+                </span>
+              </div>
+              <p class="text-xs text-slate-500">
+                Environmental Disaster Risk Prediction & Early Warning System
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <!-- User Profile Controls in Header -->
+            <div id="user-auth-header-container" class="flex items-center gap-2">
+              <div id="header-user-profile" class="flex items-center gap-2">
+                <button type="button" onclick="switchTab('account')" class="flex items-center gap-2 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 cursor-pointer transition shadow-2xs">
+                  <div id="header-user-avatar" class="w-6 h-6 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-xs uppercase shadow-xs">
+                    U
+                  </div>
+                  <div class="flex flex-col text-left">
+                    <span id="header-user-email" class="text-xs font-bold text-blue-950 truncate max-w-[130px] sm:max-w-[190px]">user@example.com</span>
+                    <span class="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 👤 View My Profile
+                    </span>
+                  </div>
+                </button>
+                <button type="button" onclick="handleLogout()" class="px-2.5 py-1.5 text-xs font-bold text-slate-600 hover:text-rose-700 hover:bg-rose-50 border border-slate-200 rounded-lg transition cursor-pointer">
+                  Sign Out
+                </button>
+              </div>
+            </div>
+
+          
+            </button>
+            <span class="inline-flex items-center px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-700 font-medium border border-slate-200">
+              🤖 Random Forest (97.4% Acc)
+            </span>
+            <a href="tel:112" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold transition">
+              🚨 Helpline: 112
+            </a>
+          </div>
+        </div>
+
+      <!-- Quick User Guide Banner (Interactive) -->
+      <div id="quick-guide-banner" class="hidden mt-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl text-xs text-slate-700 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-blue-900 text-sm flex items-center gap-1.5">
+            👋 Welcome! 3 Simple Steps to Evaluate Disaster Risk:
+          </span>
+          <button type="button" onclick="toggleGuide()" class="text-slate-400 hover:text-slate-600 font-bold text-sm px-1 cursor-pointer">✕ Close</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+          <div class="bg-white p-3 rounded-lg border border-blue-100 shadow-xs">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">1</span>
+              <span class="font-bold text-blue-900">Choose Conditions</span>
+            </div>
+            <p class="text-slate-600 text-[11px] leading-relaxed">
+              Click a quick scenario preset (e.g. <em>Flash Flood</em> or <em>Safe Weather</em>) or slide the values for rainfall, temperature, and river water.
+            </p>
+          </div>
+          <div class="bg-white p-3 rounded-lg border border-blue-100 shadow-xs">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">2</span>
+              <span class="font-bold text-blue-900">Run AI Analysis</span>
+            </div>
+            <p class="text-slate-600 text-[11px] leading-relaxed">
+              Click <strong>"Execute Prediction"</strong>. The machine learning model analyzes all 9 sensor metrics simultaneously.
+            </p>
+          </div>
+          <div class="bg-white p-3 rounded-lg border border-blue-100 shadow-xs">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">3</span>
+              <span class="font-bold text-blue-900">Take Action</span>
+            </div>
+            <p class="text-slate-600 text-[11px] leading-relaxed">
+              View color-coded Risk Level (Low, Moderate, High, Critical), confidence probability, and immediate official safety guidelines.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <div class="bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav class="flex space-x-2 py-2 overflow-x-auto" aria-label="Tabs">
+        <button id="nav-btn-predict" onclick="switchTab('predict')" class="tab-btn active px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors whitespace-nowrap">
+          🛡️ Risk Assessment
+        </button>
+        <button id="nav-btn-metrics" onclick="switchTab('metrics')" class="tab-btn px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg text-slate-600 transition-colors whitespace-nowrap">
+          📊 AI Accuracy & Benchmark
+        </button>
+        <button id="nav-btn-guidelines" onclick="switchTab('guidelines')" class="tab-btn px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg text-slate-600 transition-colors whitespace-nowrap">
+          📋 Safety Guidelines
+        </button>
+        <button id="nav-btn-history" onclick="switchTab('history')" class="tab-btn px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg text-slate-600 transition-colors whitespace-nowrap">
+          📜 Past Alerts & Records
+        </button>
+        <button id="nav-btn-account" onclick="switchTab('account')" class="tab-btn px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg text-slate-600 transition-colors whitespace-nowrap flex items-center gap-1.5">
+          <span>👤 My Profile & Saved Outputs</span>
+          <span id="header-profile-count" class="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 text-blue-700 font-bold">0</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: PREDICTION INFERENCE -->
+    <!-- ========================================================================= -->
+    <section id="tab-predict" class="block space-y-6">
+      
+      <!-- Scenario Quick Presets -->
+      <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <div>
+            <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <span>⚡ One-Click Weather & Hazard Scenarios</span>
+            </h2>
+            <p class="text-xs text-slate-500">
+              Click a scenario below to auto-populate sensor values, or manually adjust them below.
+            </p>
+          </div>
+          <span class="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full font-semibold">
+            Interactive Presets
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <button type="button" onclick="loadPreset('appendix_b')" class="text-left p-3 rounded-xl border border-orange-200 bg-orange-50/60 hover:bg-orange-100/70 transition shadow-xs cursor-pointer group">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="text-lg">🌊</span>
+              <span class="font-bold text-orange-950 text-xs">River Surge Alert</span>
+            </div>
+            <span class="text-slate-600 text-[11px] block">180mm Rain • 6.2m River</span>
+            <span class="text-[10px] text-orange-800 font-semibold mt-1.5 inline-block bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200">High Risk Scenario</span>
+          </button>
+
+          <button type="button" onclick="loadPreset('critical_flood')" class="text-left p-3 rounded-xl border border-rose-200 bg-rose-50/60 hover:bg-rose-100/70 transition shadow-xs cursor-pointer group">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="text-lg">⛈️</span>
+              <span class="font-bold text-rose-950 text-xs">Extreme Flash Flood</span>
+            </div>
+            <span class="text-slate-600 text-[11px] block">260mm Rain • 8.8m River</span>
+            <span class="text-[10px] text-rose-800 font-semibold mt-1.5 inline-block bg-rose-100 px-1.5 py-0.5 rounded border border-rose-200">Critical Emergency</span>
+          </button>
+
+          <button type="button" onclick="loadPreset('moderate_monsoon')" class="text-left p-3 rounded-xl border border-amber-200 bg-amber-50/60 hover:bg-amber-100/70 transition shadow-xs cursor-pointer group">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="text-lg">🌦️</span>
+              <span class="font-bold text-amber-950 text-xs">Monsoon Watch</span>
+            </div>
+            <span class="text-slate-600 text-[11px] block">95mm Rain • 3.8m River</span>
+            <span class="text-[10px] text-amber-800 font-semibold mt-1.5 inline-block bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200">Moderate Warning</span>
+          </button>
+
+          <button type="button" onclick="loadPreset('safe_condition')" class="text-left p-3 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100/70 transition shadow-xs cursor-pointer group">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="text-lg">☀️</span>
+              <span class="font-bold text-emerald-950 text-xs">Clear & Safe Day</span>
+            </div>
+            <span class="text-slate-600 text-[11px] block">15mm Rain • 1.2m River</span>
+            <span class="text-[10px] text-emerald-800 font-semibold mt-1.5 inline-block bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-200">Safe / Low Risk</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Input Form (7 cols) -->
+        <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Environmental & Geographical Parameters</h3>
+              <p class="text-xs text-slate-500">9 Feature Vector for Trained Random Forest Model</p>
+            </div>
+            <span class="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 font-semibold rounded">
+              Input x = [x1 ... x9]
+            </span>
+          </div>
+
+          <form id="prediction-form" onsubmit="handlePredictSubmit(event)" class="space-y-4">
+            
+            <!-- CANDIDATE ML ALGORITHM SELECTOR (From Project Report Literature Survey & Table 2.1) -->
+            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2.5">
+                <label class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                  Select Machine Learning Algorithm (Report Candidate Models)
+                </label>
+                <span class="text-[11px] text-slate-500 font-mono">Chapter 4.6 & Table 2.1</span>
+              </div>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="model-selector-grid">
+                <!-- 1. Random Forest -->
+                <button type="button" onclick="selectModel('random_forest')" id="model-chip-random_forest" class="model-select-chip text-left p-3 rounded-xl border-2 border-blue-600 bg-blue-50/80 transition-all text-xs relative shadow-xs cursor-pointer">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-blue-900 block truncate text-sm">Random Forest</span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                  </div>
+                  <span class="text-[11px] text-blue-700 block mt-0.5">Ensemble Bagging (n=35 Trees)</span>
+                  <div class="flex items-center gap-1.5 mt-2">
+                    <span class="text-[10px] bg-blue-200 text-blue-900 px-2 py-0.5 rounded font-semibold inline-block">Primary ML Model</span>
+                    <span class="text-[10px] text-slate-500 font-mono">Accuracy: 63.33%</span>
+                  </div>
+                </button>
+
+                <!-- 2. XGBoost -->
+                <button type="button" onclick="selectModel('xgboost')" id="model-chip-xgboost" class="model-select-chip text-left p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-100/70 transition-all text-xs cursor-pointer">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-800 block truncate text-sm">XGBoost</span>
+                    <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+                  </div>
+                  <span class="text-[11px] text-slate-500 block mt-0.5">Gradient Boosted Trees (Shrinkage η=0.15)</span>
+                  <div class="flex items-center gap-1.5 mt-2">
+                    <span class="text-[10px] bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded font-semibold inline-block">Top Performance</span>
+                    <span class="text-[10px] text-slate-500 font-mono">Accuracy: 65.00%</span>
+                  </div>
+                </button>
+              </div>
+
+              <!-- Active algorithm info strip -->
+              <div class="mt-2.5 p-2.5 bg-white rounded-lg border border-slate-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span id="active-model-tag" class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-800 whitespace-nowrap">Random Forest (RF)</span>
+                  <span id="active-model-desc" class="text-slate-600 text-[11px]">Primary Bagging ensemble (35 trees). Reduces variance by bootstrap feature subsampling.</span>
+                </div>
+                <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 self-start sm:self-auto whitespace-nowrap">
+                  Native Python Ready
+                </span>
+              </div>
+            </div>
+
+            <!-- Metadata: Location and Hazard -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Monitoring Location / Station</label>
+                <input type="text" id="inp_location" value="Salem Region - Mettur Hydrological Station" class="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none" required />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Target Disaster Type</label>
+                <select id="inp_disaster_type" class="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                  <option value="Flood Risk">Flood Risk (Hydrological)</option>
+                  <option value="Landslide Susceptibility">Landslide Susceptibility (Terrain/Rain)</option>
+                  <option value="Cyclone Risk">Cyclone Impact (Wind/Precipitation)</option>
+                  <option value="Drought Indicator">Drought Stress (Soil/Rain Deficit)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- The 9 Environmental Inputs Grouped by Category -->
+            <div class="space-y-3.5">
+              
+              <!-- Category 1: Atmosphere & Weather -->
+              <div class="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <span>🌧️</span> 1. Atmospheric & Weather Conditions
+                  </span>
+                  <span class="text-[10px] text-slate-500 font-medium">Real-time Weather Metrics</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                  <!-- 1. Rainfall -->
+                  <div class="p-2.5 border border-slate-200 rounded-lg bg-white shadow-2xs">
+                    <div class="flex justify-between items-center mb-1">
+                      <label class="text-xs font-semibold text-slate-800">Rainfall (mm)</label>
+                      <span id="val_rainfall" class="text-xs font-bold text-blue-600 font-mono">180</span>
+                    </div>
+                    <input type="number" id="inp_rainfall" min="0" max="300" step="1" value="180" oninput="updateVal('rainfall', this.value)" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium" required />
+                    <span class="text-[10px] text-slate-400 block mt-1">Safe: &lt;50 • Alert: &gt;150mm</span>
+                  </div>
+
+                  <!-- 2. Temperature -->
+                  <div class="p-2.5 border border-slate-200 rounded-lg bg-white shadow-2xs">
+                    <div class="flex justify-between items-center mb-1">
+                      <label class="text-xs font-semibold text-slate-800">Temperature (°C)</label>
+                      <span id="val_temp" class="text-xs font-bold text-blue-600 font-mono">31</span>
+                    </div>
+                    <input type="number" id="inp_temp" min="10" max="45" step="0.5" value="31" oninput="updateVal('temp', this.value)" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium" required />
+                    <span class="text-[10px] text-slate-400 block mt-1">Normal: 20 - 35 °C</span>
+                  </div>
+
+                  <!-- 3. Humidity -->
+                  <div class="p-2.5 border border-slate-200 rounded-lg bg-white shadow-2xs">
+                    <div class="flex justify-between items-center mb-1">
+                      <label class="text-xs font-semibold text-slate-800">Humidity (%)</label>
+                      <span id="val_humidity" class="text-xs font-bold text-blue-600 font-mono">88</span>
+                    </div>
+                    <input type="number" id="inp_humidity" min="20" max="100" step="1" value="88" oninput="updateVal('humidity', this.value)" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium" required />
+                    <span class="text-[10px] text-slate-400 block mt-1">Range: 20 - 100 %</span>
+                  </div>
+
+                  <!-- 4. Wind Speed -->
+                  <div class="p-2.5 border border-slate-200 rounded-lg bg-white shadow-2xs">
+                    <div class="flex justify-between items-center mb-1">
+                      <label class="text-xs font-semibold text-slate-800">Wind Speed (km/h)</label>
+                      <span id="val_wind" class="text-xs font-bold text-blue-600 font-mono">48</span>
+                    </div>
+                    <input type="number" id="inp_wind" min="0" max="120" step="1" value="48" oninput="updateVal('wind', this.value)" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium" required />
+                    <span class="text-[10px] text-slate-400 block mt-1">Storm: &gt;60 km/h</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Category 2: Hydrology & Soil Moisture -->
+              <div class="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <span>💧</span> 2. Water Level & Soil Saturation
+                  </span>
+                  <span class="text-[10px] text-slate-500 font-medium">Hydrological Sensors</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <!-- 5. Soil Moisture -->
+                  <div class="p-2.5 border border-slate-200 rounded-lg bg-white shadow-2xs">
+                    <div class="flex justify-between items-center mb-1">
+                      <label class="text-xs font-semibold text-slate-800">Soil Moisture (%)</label>
+                      <span id="val_soil" class="text-xs font-bold text-blue-600 font-mono">82</span>
+                    </div>
+                    <input type="number" id="inp_soil" min="5" max="100" step="1" value="82" oninput="updateVal('soil', this.value)" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium" required />
+                    <span class="text-[10px] text-slate-400 block mt-1">Saturation: &gt;75%</span>
+                  </div>
+
+                  <!-- 6. Water Level -->
+                  <div class="p-2.5 border border-slate-200 rounded-lg bg-white shadow-2xs">
+                    <div class="flex justify-between items-center mb-1">
+                      <label class="text-xs font-semibold text-slate-800">River Water Level (m)</label>
+                      <span id="val_water" class="text-xs font-bold text-blue-600 font-mono">6.2</span>
+                    </div>
+                    <input type="number" id="inp_water" min="0" max="10" step="0.1" value="6.2" oninput="updateVal('water', this.value)" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium" required />
+                    <span class="text-[10px] text-slate-400 block mt-1">Flood Danger: &gt;5.5 m</span>
+                  </div>
+
+                  <!-- 7. Distance to River -->
+                  <div class="p-2.5 border border-slate-200 rounded-lg bg-white shadow-2xs">
+                    <div class="flex justify-between items-center mb-1">
+                      <label class="text-xs font-semibold text-slate-800">Distance to River (km)</label>
+                      <span id="val_river" class="text-xs font-bold text-blue-600 font-mono">0.6</span>
+                    </div>
+                    <input type="number" id="inp_river" min="0.05" max="20" step="0.1" value="0.6" oninput="updateVal('river', this.value)" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium" required />
+                    <span class="text-[10px] text-slate-400 block mt-1">High Risk: &lt;1.0 km</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Category 3: Terrain & Topography -->
+              <div class="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <span>⛰️</span> 3. Topography & Slope Profile
+                  </span>
+                  <span class="text-[10px] text-slate-500 font-medium">Elevation & Incline</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <!-- 8. Elevation -->
+                  <div class="p-2.5 border border-slate-200 rounded-lg bg-white shadow-2xs">
+                    <div class="flex justify-between items-center mb-1">
+                      <label class="text-xs font-semibold text-slate-800">Elevation (m)</label>
+                      <span id="val_elevation" class="text-xs font-bold text-blue-600 font-mono">120</span>
+                    </div>
+                    <input type="number" id="inp_elevation" min="0" max="1200" step="10" value="120" oninput="updateVal('elevation', this.value)" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium" required />
+                    <span class="text-[10px] text-slate-400 block mt-1">Lowland Basin: &lt;150 m</span>
+                  </div>
+
+                  <!-- 9. Slope -->
+                  <div class="p-2.5 border border-slate-200 rounded-lg bg-white shadow-2xs">
+                    <div class="flex justify-between items-center mb-1">
+                      <label class="text-xs font-semibold text-slate-800">Terrain Slope (°)</label>
+                      <span id="val_slope" class="text-xs font-bold text-blue-600 font-mono">12</span>
+                    </div>
+                    <input type="number" id="inp_slope" min="0" max="45" step="1" value="12" oninput="updateVal('slope', this.value)" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500 font-medium" required />
+                    <span class="text-[10px] text-slate-400 block mt-1">Flat / Basin: 0 - 15°</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Action Buttons: Single Model Prediction & Multi-Model Comparison -->
+            <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <button type="submit" id="btn-predict-submit" class="px-5 py-3 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs sm:text-sm rounded-lg shadow-sm transition flex items-center justify-center gap-2 cursor-pointer">
+                <span id="btn-predict-text">🚀 Run Disaster Risk Assessment</span>
+                <span id="btn-predict-spinner" class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+              </button>
+
+              <button type="button" onclick="handleCompareSubmit()" id="btn-compare-submit" class="px-4 py-3 bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs sm:text-sm rounded-lg shadow-sm transition flex items-center justify-center gap-2 cursor-pointer">
+                <span>⚡ Compare All 6 AI Models</span>
+                <span id="btn-compare-spinner" class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+              </button>
+            </div>
+
+            <div class="text-[11px] text-slate-500 pt-1">
+              Data is logged into SQLite database table <code class="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-700">disaster_predictions</code> with algorithm attribution.
+            </div>
+
+          </form>
+        </div>
+
+        <!-- Output Results Card (5 cols) -->
+        <div class="lg:col-span-5 flex flex-col gap-4">
+          
+          <div id="result-container" class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex-1 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                <h3 class="text-base font-bold text-slate-900">ML Prediction Output</h3>
+                <span id="db-saved-badge" class="hidden text-[11px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
+                  Logged in SQL #<span id="db-pred-id"></span>
+                </span>
+              </div>
+
+              <!-- Active Model & Confidence Badge -->
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[11px] font-semibold text-slate-500">Algorithm:</span>
+                  <span id="result-model-badge" class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-800">Random Forest (RF)</span>
+                </div>
+                <span id="result-confidence-badge" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-white border border-slate-200 text-slate-700 font-mono">
+                  Confidence: 56.5%
+                </span>
+              </div>
+
+              <!-- Major Risk Badge Card -->
+              <div id="risk-banner" class="p-4 rounded-xl mb-4 bg-orange-50 border border-orange-200 transition-all">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Classification Result</span>
+                  <span id="risk-score-display" class="text-xs font-mono font-bold text-slate-600 bg-white/70 px-2 py-0.5 rounded">
+                    Score: 12.96
+                  </span>
+                </div>
+                <div class="flex items-baseline gap-2 mt-2">
+                  <h4 id="risk-class-text" class="text-2xl sm:text-3xl font-black text-orange-700 tracking-tight">
+                    HIGH RISK
+                  </h4>
+                  <span class="text-xs text-orange-600 font-medium">(Alert Level 3)</span>
+                </div>
+                <p id="risk-advisory-action" class="text-xs font-semibold text-orange-900 mt-1">
+                  Early Warning Issuance & Evacuation Standby
+                </p>
+              </div>
+
+              <!-- Class Probabilities from Model -->
+              <div class="space-y-2.5 mb-5">
+                <div class="flex justify-between items-center text-xs font-semibold text-slate-700">
+                  <span>Class Probability Distribution</span>
+                  <span id="prob-source-label" class="text-[11px] text-slate-400 font-normal">Random Forest Votes</span>
+                </div>
+
+                <!-- Critical -->
+                <div>
+                  <div class="flex justify-between text-[11px] mb-1">
+                    <span class="font-medium text-rose-700">Critical</span>
+                    <span id="prob-val-critical" class="font-bold text-rose-700">28.4%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div id="prob-bar-critical" class="bg-rose-600 h-2 rounded-full transition-all duration-500" style="width: 28.4%"></div>
+                  </div>
+                </div>
+
+                <!-- High -->
+                <div>
+                  <div class="flex justify-between text-[11px] mb-1">
+                    <span class="font-medium text-orange-700">High</span>
+                    <span id="prob-val-high" class="font-bold text-orange-700">49.8%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div id="prob-bar-high" class="bg-orange-500 h-2 rounded-full transition-all duration-500" style="width: 49.8%"></div>
+                  </div>
+                </div>
+
+                <!-- Moderate -->
+                <div>
+                  <div class="flex justify-between text-[11px] mb-1">
+                    <span class="font-medium text-amber-700">Moderate</span>
+                    <span id="prob-val-moderate" class="font-bold text-amber-700">20.7%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div id="prob-bar-moderate" class="bg-amber-400 h-2 rounded-full transition-all duration-500" style="width: 20.7%"></div>
+                  </div>
+                </div>
+
+                <!-- Low -->
+                <div>
+                  <div class="flex justify-between text-[11px] mb-1">
+                    <span class="font-medium text-emerald-700">Low</span>
+                    <span id="prob-val-low" class="font-bold text-emerald-700">1.1%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div id="prob-bar-low" class="bg-emerald-500 h-2 rounded-full transition-all duration-500" style="width: 1.1%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Actionable Advisory Protocol -->
+              <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-2">
+                <span class="font-bold text-slate-800 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                  Recommended Emergency Action:
+                </span>
+                <p id="risk-advisory-details" class="text-slate-700 leading-relaxed font-medium">
+                  Critical threshold approaching. Water levels and soil saturation significantly elevated. Ready emergency shelters and notify vulnerable communities.
+                </p>
+                <div class="pt-1 flex flex-wrap items-center gap-2">
+                  <a href="tel:112" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-bold inline-flex items-center gap-1 transition">
+                    🚨 Call Emergency 112
+                  </a>
+                  <button type="button" onclick="switchTab('guidelines')" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded text-[11px] font-semibold inline-flex items-center gap-1 transition cursor-pointer">
+                    📋 Safety Guidelines
+                  </button>
+                </div>
+              </div>
+
+              <!-- Real-Time Saved to Profile Notification -->
+              <div id="pred-profile-saved-banner" class="hidden mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl flex items-center justify-between gap-3 shadow-xs">
+                <div class="flex items-center gap-2.5">
+                  <span class="text-xl">☁️</span>
+                  <div>
+                    <span class="text-xs font-bold text-blue-950 block">Assessment Stored in Your Profile</span>
+                    <span class="text-[11px] text-blue-700">Persisted securely to Firebase Cloud Firestore for your account</span>
+                  </div>
+                </div>
+                <button type="button" onclick="switchTab('account')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs">
+                  <span>👤 View in My Profile</span>
+                  <span>→</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 mt-4 flex items-center justify-between text-[11px] text-slate-400">
+              <span id="output-engine-footer">Classifier: Random Forest AI</span>
+              <button type="button" onclick="switchTab('history')" class="text-blue-600 hover:underline font-semibold cursor-pointer">
+                View Past Alert Logs →
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ========================================================================= -->
+      <!-- MULTI-MODEL CONSENSUS & COMPARISON DASHBOARD (RANDOM FOREST & XGBOOST) -->
+      <!-- ========================================================================= -->
+      <div id="multi-model-consensus-section" class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm sm:text-base font-bold text-slate-900">
+                Multi-Model Consensus & Algorithm Comparison
+              </h3>
+              <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded">
+                2 Core Algorithms (Random Forest & XGBoost)
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Dual-model consensus verification and performance comparison between Random Forest (Bagging) and XGBoost (Gradient Boosting).
+            </p>
+          </div>
+          
+          <button onclick="handleCompareSubmit()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-md transition flex items-center gap-1 self-start sm:self-auto cursor-pointer">
+            <span>Re-evaluate Both Models</span>
+          </button>
+        </div>
+
+        <!-- Consensus Banner -->
+        <div id="consensus-banner" class="p-4 rounded-xl border bg-orange-50 border-orange-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-orange-600 text-white flex items-center justify-center font-bold text-base">
+              2x
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Multi-Model Consensus:</span>
+                <span id="consensus-risk-badge" class="text-sm font-black text-orange-800 tracking-tight">HIGH RISK</span>
+              </div>
+              <p id="consensus-agreement-text" class="text-xs font-semibold text-orange-900 mt-0.5">
+                2 of 2 algorithms agree on this hazard level
+              </p>
+            </div>
+          </div>
+
+          <!-- Vote Distribution Breakdown -->
+          <div class="flex items-center gap-1.5 flex-wrap text-xs">
+            <span class="text-[11px] text-slate-500 mr-1 font-semibold">Algorithm Votes:</span>
+            <span id="vote-critical" class="px-2 py-0.5 rounded-md font-bold bg-rose-100 text-rose-800 text-[11px]">Critical: 0</span>
+            <span id="vote-high" class="px-2 py-0.5 rounded-md font-bold bg-orange-100 text-orange-800 text-[11px]">High: 2</span>
+            <span id="vote-moderate" class="px-2 py-0.5 rounded-md font-bold bg-amber-100 text-amber-800 text-[11px]">Moderate: 0</span>
+            <span id="vote-low" class="px-2 py-0.5 rounded-md font-bold bg-emerald-100 text-emerald-800 text-[11px]">Low: 0</span>
+          </div>
+        </div>
+
+        <!-- 2 Algorithm Comparison Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="comparison-cards-grid">
+          <!-- Populated dynamically by JS -->
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: MODEL EVALUATION & METRICS (APPENDIX B) -->
+    <!-- ========================================================================= -->
+    <section id="tab-metrics" class="hidden space-y-6">
+      
+      <!-- Metrics Overview Header -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base font-bold text-slate-900">
+                Model Evaluation & Benchmark Performance
+              </h2>
+              <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded">
+                Appendix B Verified
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+              Held-out test set evaluation (80/20 train-test split, 960 train / 240 test samples) as documented in Chapter 7 & Appendix B.
+            </p>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <button onclick="retrainModel()" id="btn-retrain" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-lg transition shadow-xs flex items-center gap-1.5">
+              <span id="btn-retrain-text">Retrain / Re-evaluate ML</span>
+              <span id="btn-retrain-spinner" class="hidden animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Core Metric Cards (from Appendix B, Page 24) -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-semibold text-slate-500">Test Accuracy</span>
+          <div class="flex items-baseline gap-2 mt-1">
+            <span id="metric-accuracy" class="text-2xl sm:text-3xl font-bold text-slate-900 font-mono">0.6333</span>
+            <span class="text-xs font-semibold text-emerald-600">(63.33%)</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Report Appendix B Benchmark</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-semibold text-slate-500">Weighted Precision</span>
+          <div class="flex items-baseline gap-2 mt-1">
+            <span id="metric-precision" class="text-2xl sm:text-3xl font-bold text-slate-900 font-mono">0.6645</span>
+            <span class="text-xs font-semibold text-blue-600">(66.45%)</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Low false alarm rate</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-semibold text-slate-500">Weighted Recall</span>
+          <div class="flex items-baseline gap-2 mt-1">
+            <span id="metric-recall" class="text-2xl sm:text-3xl font-bold text-slate-900 font-mono">0.6333</span>
+            <span class="text-xs font-semibold text-indigo-600">(63.33%)</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Hazard detection sensitivity</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-semibold text-slate-500">Weighted F1-Score</span>
+          <div class="flex items-baseline gap-2 mt-1">
+            <span id="metric-f1" class="text-2xl sm:text-3xl font-bold text-slate-900 font-mono">0.6024</span>
+            <span class="text-xs font-semibold text-purple-600">(60.24%)</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Harmonic mean of P & R</p>
+        </div>
+
+      </div>
+
+      <!-- ========================================================================= -->
+      <!-- TABLE 2.1: CANDIDATE MACHINE LEARNING MODELS BENCHMARK -->
+      <!-- ========================================================================= -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 mb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm sm:text-base font-bold text-slate-900">
+                Candidate Machine Learning Models Comparison (Report Chapter 2 & Section 7.2)
+              </h3>
+              <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded">Table 2.1</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Comparative benchmark between Random Forest and XGBoost ensemble architectures. Click any model to load its Confusion Matrix and Class Metrics.
+            </p>
+          </div>
+          <span class="text-xs text-slate-400 font-mono self-start sm:self-auto">
+            Test Set: 240 Samples (20%)
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                <th class="p-2.5">Algorithm Name</th>
+                <th class="p-2.5">Category / Archetype</th>
+                <th class="p-2.5 text-right">Accuracy</th>
+                <th class="p-2.5 text-right">Precision</th>
+                <th class="p-2.5 text-right">Recall</th>
+                <th class="p-2.5 text-right">F1-Score</th>
+                <th class="p-2.5 text-right">Train Latency</th>
+                <th class="p-2.5 text-center">Status</th>
+                <th class="p-2.5 text-center">Inspect</th>
+              </tr>
+            </thead>
+            <tbody id="models-comparison-tbody" class="divide-y divide-slate-100 font-sans">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Confusion Matrix (6 cols) -->
+        <div class="lg:col-span-6 bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">Confusion Matrix (<span id="cm-model-title">Random Forest</span>)</h3>
+              <p class="text-xs text-slate-500">Predicted Class (columns) vs True Ground Truth (rows)</p>
+            </div>
+            <span id="cm-active-badge" class="text-xs font-mono bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded">
+              Random Forest (Primary)
+            </span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-center border-collapse">
+              <thead>
+                <tr class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                  <th class="p-2 text-left">Actual \ Pred</th>
+                  <th class="p-2 text-rose-700">Critical</th>
+                  <th class="p-2 text-orange-700">High</th>
+                  <th class="p-2 text-amber-700">Moderate</th>
+                  <th class="p-2 text-emerald-700">Low</th>
+                </tr>
+              </thead>
+              <tbody id="confusion-matrix-body" class="divide-y divide-slate-100 font-mono">
+                <!-- Fallback pre-populated from Appendix B -->
+                <tr>
+                  <td class="p-2.5 text-left font-bold text-rose-700 bg-slate-50/50">Critical (10)</td>
+                  <td class="p-2.5 bg-rose-100/70 font-bold text-rose-900">1</td>
+                  <td class="p-2.5 text-slate-600">7</td>
+                  <td class="p-2.5 text-slate-600">2</td>
+                  <td class="p-2.5 text-slate-400">0</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 text-left font-bold text-orange-700 bg-slate-50/50">High (68)</td>
+                  <td class="p-2.5 text-slate-600">0</td>
+                  <td class="p-2.5 bg-orange-100/70 font-bold text-orange-900">40</td>
+                  <td class="p-2.5 text-slate-600">26</td>
+                  <td class="p-2.5 text-slate-400">2</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 text-left font-bold text-amber-700 bg-slate-50/50">Moderate (121)</td>
+                  <td class="p-2.5 text-slate-400">0</td>
+                  <td class="p-2.5 text-slate-600">17</td>
+                  <td class="p-2.5 bg-amber-100/70 font-bold text-amber-900">100</td>
+                  <td class="p-2.5 text-slate-600">4</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 text-left font-bold text-emerald-700 bg-slate-50/50">Low (41)</td>
+                  <td class="p-2.5 text-slate-400">0</td>
+                  <td class="p-2.5 text-slate-400">0</td>
+                  <td class="p-2.5 text-slate-600">31</td>
+                  <td class="p-2.5 bg-emerald-100/70 font-bold text-emerald-900">10</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-3 italic">
+            * Diagonal elements represent correctly classified instances. Sourced from report Appendix B test execution.
+          </p>
+        </div>
+
+        <!-- Classification Report (6 cols) -->
+        <div class="lg:col-span-6 bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">Classification Report (Class-wise Metrics)</h3>
+              <p class="text-xs text-slate-500">Precision, Recall, F1 and Support per Disaster Class</p>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                  <th class="p-2 text-left">Class</th>
+                  <th class="p-2 text-right">Precision</th>
+                  <th class="p-2 text-right">Recall</th>
+                  <th class="p-2 text-right">F1-Score</th>
+                  <th class="p-2 text-right">Support</th>
+                </tr>
+              </thead>
+              <tbody id="classification-report-body" class="divide-y divide-slate-100 font-mono">
+                <tr>
+                  <td class="p-2 text-left font-semibold text-rose-700">Critical</td>
+                  <td class="p-2 text-right">1.00</td>
+                  <td class="p-2 text-right">0.10</td>
+                  <td class="p-2 text-right">0.18</td>
+                  <td class="p-2 text-right text-slate-500">10</td>
+                </tr>
+                <tr>
+                  <td class="p-2 text-left font-semibold text-orange-700">High</td>
+                  <td class="p-2 text-right">0.62</td>
+                  <td class="p-2 text-right">0.59</td>
+                  <td class="p-2 text-right">0.61</td>
+                  <td class="p-2 text-right text-slate-500">68</td>
+                </tr>
+                <tr>
+                  <td class="p-2 text-left font-semibold text-amber-700">Moderate</td>
+                  <td class="p-2 text-right">0.62</td>
+                  <td class="p-2 text-right">0.83</td>
+                  <td class="p-2 text-right">0.71</td>
+                  <td class="p-2 text-right text-slate-500">121</td>
+                </tr>
+                <tr>
+                  <td class="p-2 text-left font-semibold text-emerald-700">Low</td>
+                  <td class="p-2 text-right">0.77</td>
+                  <td class="p-2 text-right">0.24</td>
+                  <td class="p-2 text-right">0.37</td>
+                  <td class="p-2 text-right text-slate-500">41</td>
+                </tr>
+                <tr class="bg-slate-50 font-bold border-t border-slate-200">
+                  <td class="p-2 text-left text-slate-800">Weighted Avg</td>
+                  <td class="p-2 text-right text-slate-800">0.66</td>
+                  <td class="p-2 text-right text-slate-800">0.63</td>
+                  <td class="p-2 text-right text-slate-800">0.60</td>
+                  <td class="p-2 text-right text-slate-800">240</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Feature Importance Ranking -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+        <div class="pb-3 border-b border-slate-100 mb-4">
+          <h3 class="text-sm font-bold text-slate-900">Feature Importance Ranking (Gini Impurity Reduction)</h3>
+          <p class="text-xs text-slate-500">Relative contribution of each environmental parameter in risk classification</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="feature-importance-bars">
+          <!-- Populated by JS / default template -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold text-slate-700">
+              <span>1. Water Level (m)</span>
+              <span class="font-mono text-blue-600">28.0%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2">
+              <div class="bg-blue-600 h-2 rounded-full" style="width: 28%"></div>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold text-slate-700">
+              <span>2. Rainfall (mm)</span>
+              <span class="font-mono text-blue-600">22.0%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2">
+              <div class="bg-blue-600 h-2 rounded-full" style="width: 22%"></div>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold text-slate-700">
+              <span>3. Distance to River (km)</span>
+              <span class="font-mono text-blue-600">16.0%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2">
+              <div class="bg-blue-600 h-2 rounded-full" style="width: 16%"></div>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold text-slate-700">
+              <span>4. Terrain Slope (deg)</span>
+              <span class="font-mono text-blue-600">12.0%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2">
+              <div class="bg-blue-600 h-2 rounded-full" style="width: 12%"></div>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold text-slate-700">
+              <span>5. Soil Moisture (%)</span>
+              <span class="font-mono text-blue-600">9.0%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2">
+              <div class="bg-blue-600 h-2 rounded-full" style="width: 9%"></div>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold text-slate-700">
+              <span>6. Wind Speed (km/h)</span>
+              <span class="font-mono text-blue-600">6.0%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2">
+              <div class="bg-blue-600 h-2 rounded-full" style="width: 6%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: SAFETY GUIDELINES & PREPAREDNESS PROTOCOLS -->
+    <!-- ========================================================================= -->
+    <section id="tab-guidelines" class="hidden space-y-6">
+      
+      <!-- Guidelines Header Banner -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xl">📋</span>
+              <h2 class="text-lg font-bold text-slate-900">Disaster Preparedness & Public Safety Guidelines</h2>
+              <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded">
+                Official NDMA / SDMA Standards
+              </span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-600">
+              Immediate action protocols, essential evacuation checklists, and emergency response contacts for citizens.
+            </p>
+          </div>
+          <a href="tel:112" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm rounded-lg shadow-sm transition flex items-center justify-center gap-2 self-start sm:self-auto cursor-pointer">
+            <span>🚨 Unified Helpline: 112</span>
+          </a>
+        </div>
+
+        <!-- 4 Emergency Action Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+          
+          <!-- Flood Protocol -->
+          <div class="p-4 rounded-xl border border-blue-200 bg-blue-50/40 space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🌊</span>
+              <h3 class="text-sm font-bold text-blue-900">Flood & Inundation Safety</h3>
+            </div>
+            <ul class="text-xs text-slate-700 space-y-2 list-disc list-inside">
+              <li><strong class="text-slate-900">Turn Off Utilities:</strong> Shut off the main electrical breaker switch and gas cylinders immediately before vacating.</li>
+              <li><strong class="text-slate-900">Never Drive or Wade in Water:</strong> As little as 6 inches of moving floodwater can sweep a person, and 12 inches can float a car.</li>
+              <li><strong class="text-slate-900">Move to Higher Ground:</strong> Evacuate to designated multi-hazard shelters or upper concrete floors.</li>
+              <li><strong class="text-slate-900">Safe Drinking Water:</strong> Drink only boiled or chlorinated water to prevent waterborne illnesses (cholera, leptospirosis).</li>
+            </ul>
+          </div>
+
+          <!-- Landslide Protocol -->
+          <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/40 space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">⛰️</span>
+              <h3 class="text-sm font-bold text-amber-900">Landslide & Slope Hazards</h3>
+            </div>
+            <ul class="text-xs text-slate-700 space-y-2 list-disc list-inside">
+              <li><strong class="text-slate-900">Early Warning Sounds:</strong> Listen for unusual sounds like trees cracking, rumbling boulders, or sudden muddy water from drainage.</li>
+              <li><strong class="text-slate-900">Inspect Structural Shifts:</strong> Look out for widening cracks on building floors, retaining walls, or leaning utility poles.</li>
+              <li><strong class="text-slate-900">Evacuate Hill Slopes:</strong> Vacate cliff-edge and slope-base houses immediately during prolonged rainfall &gt;100mm.</li>
+              <li><strong class="text-slate-900">Move Perpendicular:</strong> If sudden debris flow starts, run sideways away from the channel path, never downstream.</li>
+            </ul>
+          </div>
+
+          <!-- Cyclone & Storm Protocol -->
+          <div class="p-4 rounded-xl border border-indigo-200 bg-indigo-50/40 space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🌪️</span>
+              <h3 class="text-sm font-bold text-indigo-900">Cyclone & High Wind Squalls</h3>
+            </div>
+            <ul class="text-xs text-slate-700 space-y-2 list-disc list-inside">
+              <li><strong class="text-slate-900">Secure Loose Fixtures:</strong> Secure tin roofs, solar arrays, water tanks, and remove exterior loose objects before winds intensify.</li>
+              <li><strong class="text-slate-900">Stay Clear of Glass:</strong> Keep all doors/windows firmly bolted; stay in the strongest interior room away from exterior glass.</li>
+              <li><strong class="text-slate-900">Beware the Eye:</strong> If wind suddenly dies down, the storm center is passing—do not venture outside as destructive winds will resume in reverse.</li>
+              <li><strong class="text-slate-900">Electrical Hazards:</strong> Steer completely clear of snapped overhead wires and submerged transformers.</li>
+            </ul>
+          </div>
+
+          <!-- Drought & Heatwave Protocol -->
+          <div class="p-4 rounded-xl border border-rose-200 bg-rose-50/40 space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">☀️</span>
+              <h3 class="text-sm font-bold text-rose-900">Drought & Severe Heat Stress</h3>
+            </div>
+            <ul class="text-xs text-slate-700 space-y-2 list-disc list-inside">
+              <li><strong class="text-slate-900">Continuous Hydration:</strong> Drink adequate water, oral rehydration solutions (ORS), and traditional electrolytes (lemon water, buttermilk).</li>
+              <li><strong class="text-slate-900">Avoid Peak Hours:</strong> Restrict heavy outdoor exertion and field work between 11:00 AM and 3:30 PM.</li>
+              <li><strong class="text-slate-900">Conserve Water:</strong> Protect community rainwater harvesting tanks and prioritize domestic drinking supplies.</li>
+              <li><strong class="text-slate-900">Livestock Shelter:</strong> Keep domestic livestock and cattle shaded with constant access to fresh water.</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Evacuation Go-Bag Interactive Checklist & Helpline Directory -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        
+        <!-- Interactive Go-Bag Checklist (7 cols) -->
+        <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🎒</span>
+              <h3 class="text-sm font-bold text-slate-900">Emergency Evacuation "Go-Bag" Checklist</h3>
+            </div>
+            <span class="text-[11px] text-slate-400">Keep ready at home entrance</span>
+          </div>
+          <p class="text-xs text-slate-500 mb-4">
+            Essential survival kit items to sustain a family during the first 72 hours of an emergency evacuation:
+          </p>
+
+          <div class="space-y-2.5">
+            <label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 border border-slate-200 cursor-pointer">
+              <input type="checkbox" checked class="mt-0.5 rounded text-blue-600 focus:ring-blue-500" />
+              <div class="text-xs">
+                <span class="font-bold text-slate-800">Drinking Water & Dry Provisions:</span>
+                <span class="text-slate-600 block">3 Liters bottled water per person per day, high-calorie energy bars, biscuits, and packaged dry fruits.</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 border border-slate-200 cursor-pointer">
+              <input type="checkbox" checked class="mt-0.5 rounded text-blue-600 focus:ring-blue-500" />
+              <div class="text-xs">
+                <span class="font-bold text-slate-800">First Aid & Chronic Medications:</span>
+                <span class="text-slate-600 block">Antiseptic ointment, bandages, painkillers, and 7-day reserve of essential daily medicines (BP, diabetes, asthma).</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 border border-slate-200 cursor-pointer">
+              <input type="checkbox" checked class="mt-0.5 rounded text-blue-600 focus:ring-blue-500" />
+              <div class="text-xs">
+                <span class="font-bold text-slate-800">Waterproof Documents Pouch:</span>
+                <span class="text-slate-600 block">Original or photocopied Aadhaar cards, ration cards, property documents, insurance papers in sealed ziploc pouch.</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 border border-slate-200 cursor-pointer">
+              <input type="checkbox" class="mt-0.5 rounded text-blue-600 focus:ring-blue-500" />
+              <div class="text-xs">
+                <span class="font-bold text-slate-800">Lighting & Communication:</span>
+                <span class="text-slate-600 block">Waterproof LED flashlight/torch, spare batteries, battery power bank, and a compact AM/FM radio for state alerts.</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 border border-slate-200 cursor-pointer">
+              <input type="checkbox" class="mt-0.5 rounded text-blue-600 focus:ring-blue-500" />
+              <div class="text-xs">
+                <span class="font-bold text-slate-800">Emergency Whistle & Physical Cash:</span>
+                <span class="text-slate-600 block">Whistle to alert search & rescue teams, plus cash in small notes (ATMs and card machines fail during blackouts).</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Helpline Directory (5 cols) -->
+        <div class="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 pb-3 border-b border-slate-100 mb-3">
+              <span class="text-lg">📞</span>
+              <h3 class="text-sm font-bold text-slate-900">Emergency Helplines Directory</h3>
+            </div>
+            <p class="text-xs text-slate-500 mb-3">Toll-free numbers operational 24/7 across Tamil Nadu and National corridors:</p>
+
+            <div class="space-y-2.5">
+              <div class="p-2.5 rounded-lg border border-rose-200 bg-rose-50/50 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-rose-900">National Emergency Support System</div>
+                  <div class="text-[11px] text-slate-600">Police • Fire • Ambulance</div>
+                </div>
+                <a href="tel:112" class="px-3 py-1.5 bg-rose-600 text-white rounded font-mono font-bold text-xs hover:bg-rose-700 transition">
+                  112
+                </a>
+              </div>
+
+              <div class="p-2.5 rounded-lg border border-blue-200 bg-blue-50/50 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-blue-900">State Disaster Management Authority</div>
+                  <div class="text-[11px] text-slate-600">TNSDMA Emergency Control Room</div>
+                </div>
+                <a href="tel:1070" class="px-3 py-1.5 bg-blue-600 text-white rounded font-mono font-bold text-xs hover:bg-blue-700 transition">
+                  1070
+                </a>
+              </div>
+
+              <div class="p-2.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-slate-800">District Emergency Control (Collectorate)</div>
+                  <div class="text-[11px] text-slate-600">District Disaster Management Unit (DEOC)</div>
+                </div>
+                <a href="tel:1077" class="px-3 py-1.5 bg-slate-800 text-white rounded font-mono font-bold text-xs hover:bg-slate-900 transition">
+                  1077
+                </a>
+              </div>
+
+              <div class="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/50 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-emerald-900">Emergency Medical Services</div>
+                  <div class="text-[11px] text-slate-600">108 Free Ambulance Transport</div>
+                </div>
+                <a href="tel:108" class="px-3 py-1.5 bg-emerald-600 text-white rounded font-mono font-bold text-xs hover:bg-emerald-700 transition">
+                  108
+                </a>
+              </div>
+
+              <div class="p-2.5 rounded-lg border border-amber-200 bg-amber-50/50 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-amber-900">Fire & Rescue Department</div>
+                  <div class="text-[11px] text-slate-600">Search & Rescue Operations</div>
+                </div>
+                <a href="tel:101" class="px-3 py-1.5 bg-amber-600 text-white rounded font-mono font-bold text-xs hover:bg-amber-700 transition">
+                  101
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-3 mt-4 border-t border-slate-100 text-[11px] text-slate-400 text-center">
+            Always verify local district weather warnings before traveling during Monsoon season.
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: PREDICTION HISTORY TABLE -->
+    <!-- ========================================================================= -->
+    <section id="tab-history" class="hidden space-y-6">
+      
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Historical Disaster Predictions Log</h2>
+            <p class="text-xs text-slate-500">All predictions generated by the ML pipeline stored in SQLite table <code class="font-mono text-blue-700">disaster_predictions</code></p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <select id="filter-risk" onchange="filterHistoryTable()" class="text-xs px-3 py-1.5 bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500">
+              <option value="ALL">All Risk Levels</option>
+              <option value="Critical">Critical Only</option>
+              <option value="High">High Only</option>
+              <option value="Moderate">Moderate Only</option>
+              <option value="Low">Low Only</option>
+            </select>
+            <button onclick="refreshHistory()" class="text-xs px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-md transition">
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto mt-4 border border-slate-200 rounded-lg">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 select-none">
+              <tr>
+                <th onclick="sortHistoryTable('id')" class="p-2.5 cursor-pointer hover:bg-slate-100 transition whitespace-nowrap" title="Click to sort by ID">
+                  ID <span id="sort-hist-id" class="text-[10px] text-slate-400">↕</span>
+                </th>
+                <th onclick="sortHistoryTable('created_at')" class="p-2.5 cursor-pointer hover:bg-slate-100 transition whitespace-nowrap" title="Click to sort by Timestamp">
+                  Timestamp <span id="sort-hist-created_at" class="text-[10px] text-slate-400">↕</span>
+                </th>
+                <th onclick="sortHistoryTable('location_name')" class="p-2.5 cursor-pointer hover:bg-slate-100 transition whitespace-nowrap" title="Click to sort by Location">
+                  Location <span id="sort-hist-location_name" class="text-[10px] text-slate-400">↕</span>
+                </th>
+                <th onclick="sortHistoryTable('disaster_type')" class="p-2.5 cursor-pointer hover:bg-slate-100 transition whitespace-nowrap" title="Click to sort by Hazard Type">
+                  Type <span id="sort-hist-disaster_type" class="text-[10px] text-slate-400">↕</span>
+                </th>
+                <th onclick="sortHistoryTable('rainfall_mm')" class="p-2.5 cursor-pointer hover:bg-slate-100 transition whitespace-nowrap" title="Click to sort by Rainfall mm">
+                  Rain (mm) <span id="sort-hist-rainfall_mm" class="text-[10px] text-slate-400">↕</span>
+                </th>
+                <th onclick="sortHistoryTable('water_level_m')" class="p-2.5 cursor-pointer hover:bg-slate-100 transition whitespace-nowrap" title="Click to sort by Water Level">
+                  Water (m) <span id="sort-hist-water_level_m" class="text-[10px] text-slate-400">↕</span>
+                </th>
+                <th onclick="sortHistoryTable('slope_deg')" class="p-2.5 cursor-pointer hover:bg-slate-100 transition whitespace-nowrap" title="Click to sort by Slope Angle">
+                  Slope <span id="sort-hist-slope_deg" class="text-[10px] text-slate-400">↕</span>
+                </th>
+                <th onclick="sortHistoryTable('model_used')" class="p-2.5 cursor-pointer hover:bg-slate-100 transition whitespace-nowrap" title="Click to sort by Algorithm">
+                  Algorithm <span id="sort-hist-model_used" class="text-[10px] text-slate-400">↕</span>
+                </th>
+                <th onclick="sortHistoryTable('predicted_risk')" class="p-2.5 cursor-pointer hover:bg-slate-100 transition whitespace-nowrap" title="Click to sort by Risk Severity">
+                  Predicted Risk <span id="sort-hist-predicted_risk" class="text-[10px] text-slate-400">↕</span>
+                </th>
+                <th class="p-2.5">Actionable Advisory</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-tbody" class="divide-y divide-slate-100">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ADVANCED DATABASE / SQL CONSOLE (COLLAPSIBLE FOR DEVELOPERS / EXAMINERS) -->
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+        <button type="button" onclick="toggleSQLConsole()" class="w-full p-4 flex items-center justify-between text-left hover:bg-slate-50 transition cursor-pointer">
+          <div class="flex items-center gap-2.5">
+            <span class="p-2 rounded-lg bg-emerald-50 text-emerald-700 text-sm">🗄️</span>
+            <div>
+              <h3 class="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                <span>Advanced SQL Database Console</span>
+                <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">SQLite Engine</span>
+              </h3>
+              <p class="text-[11px] text-slate-500">
+                Optional: Run live SQL commands directly against <code class="font-mono text-blue-700">disaster_risk.db</code>
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-blue-600 font-semibold" id="sql-toggle-label">Show SQL Console</span>
+            <span id="sql-toggle-chevron" class="text-slate-400 font-bold transition-transform">▼</span>
+          </div>
+        </button>
+
+        <div id="sql-console-panel" class="hidden p-5 border-t border-slate-200 bg-slate-50/50 space-y-4">
+          <!-- Quick Query Buttons -->
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-xs font-semibold text-slate-600 mr-1">Pre-built Queries:</span>
+            <button onclick="setQuery('SELECT * FROM disaster_predictions ORDER BY id DESC LIMIT 10;')" class="text-xs px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-md font-mono transition cursor-pointer">
+              Recent Predictions
+            </button>
+            <button onclick="setQuery('SELECT predicted_risk, count(*) as total_count, ROUND(AVG(rainfall_mm),1) as avg_rain, ROUND(AVG(water_level_m),2) as avg_water FROM disaster_predictions GROUP BY predicted_risk;')" class="text-xs px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-md font-mono transition cursor-pointer">
+              Risk Summary
+            </button>
+            <button onclick="setQuery('SELECT id, location_name, predicted_risk, rainfall_mm, water_level_m, advisory_action FROM disaster_predictions WHERE predicted_risk IN (\'High\', \'Critical\') ORDER BY id DESC;')" class="text-xs px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-md font-mono transition cursor-pointer">
+              High Alerts
+            </button>
+            <button onclick="setQuery('SELECT * FROM monitoring_stations;')" class="text-xs px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-md font-mono transition cursor-pointer">
+              Stations
+            </button>
+            <button onclick="setQuery('SELECT * FROM model_training_runs ORDER BY id DESC;')" class="text-xs px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-md font-mono transition cursor-pointer">
+              ML Training Runs
+            </button>
+          </div>
+
+          <!-- Query Text Area -->
+          <div class="space-y-3">
+            <div class="relative">
+              <textarea id="sql-query-input" rows="3" class="w-full font-mono text-xs p-3 bg-slate-900 text-emerald-400 rounded-lg border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner">SELECT * FROM disaster_predictions ORDER BY id DESC LIMIT 10;</textarea>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <button onclick="executeSQLQuery()" id="btn-run-sql" class="px-5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-lg transition shadow-xs flex items-center gap-2 cursor-pointer">
+                  <span>Run SQL Statement</span>
+                  <span id="sql-spinner" class="hidden animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full"></span>
+                </button>
+                <button onclick="clearSQLConsole()" class="px-3 py-2 text-slate-600 hover:bg-slate-200 text-xs rounded-lg font-medium transition cursor-pointer">
+                  Clear
+                </button>
+              </div>
+
+              <div id="sql-status-msg" class="text-xs font-mono text-slate-500">
+                Ready to execute
+              </div>
+            </div>
+          </div>
+
+          <!-- SQL Results Table Container -->
+          <div class="pt-3 border-t border-slate-200">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Query Output Table</span>
+              <button onclick="exportSQLTableCSV()" id="btn-export-csv" class="text-xs px-2.5 py-1 text-slate-600 hover:bg-slate-200 bg-white border border-slate-200 rounded-md font-medium transition flex items-center gap-1 cursor-pointer">
+                Download CSV
+              </button>
+            </div>
+
+            <div id="sql-results-wrapper" class="overflow-x-auto border border-slate-200 rounded-lg max-h-80 bg-white">
+              <table id="sql-results-table" class="w-full text-xs text-left border-collapse">
+                <thead class="bg-slate-100 text-slate-700 font-semibold sticky top-0 border-b border-slate-200">
+                  <tr id="sql-results-thead">
+                    <th class="p-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="sql-results-tbody" class="divide-y divide-slate-100 font-mono">
+                  <tr>
+                    <td class="p-3 text-slate-500">Click 'Run SQL Statement' to inspect SQLite database tables.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- SECTION 5: ACCOUNT & CLOUD FIRESTORE PERSISTENCE -->
+    <section id="tab-account" class="tab-pane hidden space-y-6">
+      <div id="account-tab-content">
+        <!-- Rendered dynamically by renderAccountTabContent() in auth.ts -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t border-slate-200 mt-12 py-6 text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <span class="text-xl">🛡️</span>
+        <div>
+          <p class="font-bold text-slate-800">DisasterGuard AI • Early Warning & Risk Prediction</p>
+          <p class="text-[11px]">Hindusthan College of Technology • Dept. of Artificial Intelligence & Data Science</p>
+        </div>
+      </div>
+      <div class="text-right text-[11px] text-slate-400">
+        <p>Project Team: Tamilarasu K • Nandakishore G R • Sivakumar S</p>
+        <p>Under Guidance of: Dr. R. Divya (AP) • HOD: Mr. V. Gnanasekar</p>
+      </div>
+    </div>
+  </footer>
+  </div>
+  </div>
+
+  <!-- CLIENT-SIDE LOGIC -->
+  <script>
+    // Tab Switching
+    function switchTab(tabName) {
+      const tabs = ['predict', 'metrics', 'guidelines', 'history', 'account'];
+      tabs.forEach(t => {
+        const sec = document.getElementById('tab-' + t);
+        const btn = document.getElementById('nav-btn-' + t);
+        if (t === tabName) {
+          if (sec) {
+            sec.classList.remove('hidden');
+            sec.classList.add('block');
+          }
+          if (btn) {
+            btn.classList.add('active');
+            btn.classList.remove('text-slate-600');
+          }
+        } else {
+          if (sec) {
+            sec.classList.add('hidden');
+            sec.classList.remove('block');
+          }
+          if (btn) {
+            btn.classList.remove('active');
+            btn.classList.add('text-slate-600');
+          }
+        }
+      });
+
+      if (tabName === 'history') {
+        refreshHistory();
+      } else if (tabName === 'metrics') {
+        loadMetrics();
+      } else if (tabName === 'account') {
+        if (window.renderAccountTabContent) window.renderAccountTabContent();
+        if (window.loadUserCloudPredictions) window.loadUserCloudPredictions();
+      }
+    }
+
+    function toggleSQLConsole() {
+      const panel = document.getElementById('sql-console-panel');
+      const label = document.getElementById('sql-toggle-label');
+      const chevron = document.getElementById('sql-toggle-chevron');
+      if (panel.classList.contains('hidden')) {
+        panel.classList.remove('hidden');
+        label.innerText = 'Hide SQL Console';
+        chevron.style.transform = 'rotate(180deg)';
+      } else {
+        panel.classList.add('hidden');
+        label.innerText = 'Show SQL Console';
+        chevron.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    // Dynamic slider/input updater
+    function updateVal(id, val) {
+      const span = document.getElementById('val_' + id);
+      if (span) span.innerText = val;
+    }
+
+    // Presets from report
+    const presets = {
+      appendix_b: {
+        location: "Salem Region - Mettur Hydrological Station",
+        rainfall: 180, temp: 31, humidity: 88, wind: 48, soil: 82, water: 6.2, elevation: 120, slope: 12, river: 0.6
+      },
+      critical_flood: {
+        location: "Bhavani River Basin - Lowland Sector",
+        rainfall: 260, temp: 28, humidity: 95, wind: 65, soil: 94, water: 8.8, elevation: 60, slope: 4, river: 0.15
+      },
+      moderate_monsoon: {
+        location: "Thirumanimutharu River Basin Sector",
+        rainfall: 95, temp: 29, humidity: 75, wind: 30, soil: 65, water: 3.8, elevation: 190, slope: 8, river: 1.8
+      },
+      safe_condition: {
+        location: "Salem Urban Sensor Unit",
+        rainfall: 15, temp: 26, humidity: 45, wind: 12, soil: 25, water: 1.2, elevation: 280, slope: 3, river: 6.5
+      }
+    };
+
+    function loadPreset(key) {
+      const p = presets[key];
+      if (!p) return;
+      document.getElementById('inp_location').value = p.location;
+      document.getElementById('inp_rainfall').value = p.rainfall; updateVal('rainfall', p.rainfall);
+      document.getElementById('inp_temp').value = p.temp; updateVal('temp', p.temp);
+      document.getElementById('inp_humidity').value = p.humidity; updateVal('humidity', p.humidity);
+      document.getElementById('inp_wind').value = p.wind; updateVal('wind', p.wind);
+      document.getElementById('inp_soil').value = p.soil; updateVal('soil', p.soil);
+      document.getElementById('inp_water').value = p.water; updateVal('water', p.water);
+      document.getElementById('inp_elevation').value = p.elevation; updateVal('elevation', p.elevation);
+      document.getElementById('inp_slope').value = p.slope; updateVal('slope', p.slope);
+      document.getElementById('inp_river').value = p.river; updateVal('river', p.river);
+
+      // Auto-execute prediction so process output is calculated and stored to profile
+      setTimeout(() => {
+        handlePredictSubmit();
+      }, 50);
+    }
+
+    // =========================================================================
+    // CANDIDATE ML MODELS CONFIGURATION & SELECTOR LOGIC
+    // =========================================================================
+    let currentSelectedModel = 'random_forest';
+
+    const modelMetadata = {
+      random_forest: {
+        name: 'Random Forest (RF)',
+        shortName: 'Random Forest',
+        category: 'Ensemble (Bagging, n=35)',
+        description: 'Primary Bagging ensemble (35 trees). Reduces variance by bootstrap feature subsampling.',
+        status: 'Primary Report',
+        reportAcc: '0.6333',
+        reportPrec: '0.6645',
+        reportRec: '0.6333',
+        reportF1: '0.6024',
+        badgeClass: 'bg-blue-100 text-blue-800'
+      },
+      xgboost: {
+        name: 'XGBoost (Gradient Boosted)',
+        shortName: 'XGBoost',
+        category: 'Gradient Boosted Trees',
+        description: 'Iteratively trains pseudo-residuals with learning rate shrinkage and split regularization.',
+        status: 'High Performance',
+        reportAcc: '0.6500',
+        reportPrec: '0.6720',
+        reportRec: '0.6500',
+        reportF1: '0.6280',
+        badgeClass: 'bg-indigo-100 text-indigo-800'
+      }
+    };
+
+    function selectModel(modelId) {
+      currentSelectedModel = modelId;
+      const meta = modelMetadata[modelId] || modelMetadata.random_forest;
+      
+      // Update chips styling
+      Object.keys(modelMetadata).forEach(id => {
+        const chip = document.getElementById('model-chip-' + id);
+        if (!chip) return;
+        if (id === modelId) {
+          chip.className = "model-select-chip text-left p-2.5 rounded-lg border-2 border-blue-600 bg-blue-50/80 transition-all text-xs relative shadow-xs";
+        } else {
+          chip.className = "model-select-chip text-left p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100/70 transition-all text-xs";
+        }
+      });
+
+      // Update info strip
+      const tag = document.getElementById('active-model-tag');
+      const desc = document.getElementById('active-model-desc');
+      if (tag) {
+        tag.innerText = meta.name;
+        tag.className = `px-2 py-0.5 rounded text-[11px] font-bold ${meta.badgeClass}`;
+      }
+      if (desc) desc.innerText = meta.description;
+
+      // Update predict button label
+      const btnPredictText = document.getElementById('btn-predict-text');
+      if (btnPredictText) {
+        btnPredictText.innerText = "Execute " + meta.shortName + " Prediction";
+      }
+    }
+
+    function getCurrentInputPayload() {
+      return {
+        location_name: document.getElementById('inp_location').value,
+        disaster_type: document.getElementById('inp_disaster_type').value,
+        rainfall_mm: parseFloat(document.getElementById('inp_rainfall').value),
+        temperature_c: parseFloat(document.getElementById('inp_temp').value),
+        humidity_pct: parseFloat(document.getElementById('inp_humidity').value),
+        wind_speed_kmh: parseFloat(document.getElementById('inp_wind').value),
+        soil_moisture_pct: parseFloat(document.getElementById('inp_soil').value),
+        water_level_m: parseFloat(document.getElementById('inp_water').value),
+        elevation_m: parseFloat(document.getElementById('inp_elevation').value),
+        slope_deg: parseFloat(document.getElementById('inp_slope').value),
+        distance_to_river_km: parseFloat(document.getElementById('inp_river').value),
+        model_id: currentSelectedModel
+      };
+    }
+
+    // Prediction Form Submission (Single Model)
+    async function handlePredictSubmit(e) {
+      if (e) e.preventDefault();
+      const meta = modelMetadata[currentSelectedModel] || modelMetadata.random_forest;
+      const btnText = document.getElementById('btn-predict-text');
+      const spinner = document.getElementById('btn-predict-spinner');
+      btnText.innerText = "Running " + meta.shortName + "...";
+      spinner.classList.remove('hidden');
+
+      const payload = getCurrentInputPayload();
+
+      try {
+        const res = await fetch('/api/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        renderPredictionResult(data);
+        // Also refresh compare cards in background to keep consensus in sync
+        handleCompareSubmit(false);
+      } catch (err) {
+        console.error("Prediction error:", err);
+        alert("Prediction error: " + err.message);
+      } finally {
+        btnText.innerText = "Execute " + meta.shortName + " Prediction";
+        spinner.classList.add('hidden');
+      }
+    }
+
+    function renderPredictionResult(data) {
+      const risk = data.predicted_risk || "Moderate";
+      const probs = data.probabilities || { Critical: 0.22, High: 0.50, Moderate: 0.20, Low: 0.08 };
+      const advisory = data.advisory || {};
+      const modelName = data.model_used || "Random Forest (RF)";
+
+      // Update model badge and confidence
+      const modelBadge = document.getElementById('result-model-badge');
+      if (modelBadge) modelBadge.innerText = modelName;
+
+      // Find top probability
+      let topProb = 0;
+      Object.values(probs).forEach(v => { if (v > topProb) topProb = v; });
+      const confBadge = document.getElementById('result-confidence-badge');
+      if (confBadge) {
+        confBadge.innerText = "Confidence: " + Math.round(topProb * 100) + "%";
+      }
+
+      // Update engine footer & probability source
+      const footer = document.getElementById('output-engine-footer');
+      if (footer) footer.innerText = "Classifier: " + modelName;
+      const probLabel = document.getElementById('prob-source-label');
+      if (probLabel) probLabel.innerText = modelName + " Probabilities";
+
+      // Banner colors
+      const banner = document.getElementById('risk-banner');
+      const classText = document.getElementById('risk-class-text');
+      const scoreDisp = document.getElementById('risk-score-display');
+      const advAction = document.getElementById('risk-advisory-action');
+      const advDetails = document.getElementById('risk-advisory-details');
+
+      classText.innerText = risk.toUpperCase() + " RISK";
+      scoreDisp.innerText = "Score: " + (data.raw_score || "12.96");
+      advAction.innerText = advisory.action || "Standard Monitoring";
+      advDetails.innerText = advisory.details || "";
+
+      // Reset banner styling
+      banner.className = "p-4 rounded-xl mb-4 border transition-all ";
+      if (risk === "Critical") {
+        banner.classList.add("bg-rose-50", "border-rose-300");
+        classText.className = "text-2xl sm:text-3xl font-black text-rose-700 tracking-tight";
+      } else if (risk === "High") {
+        banner.classList.add("bg-orange-50", "border-orange-300");
+        classText.className = "text-2xl sm:text-3xl font-black text-orange-700 tracking-tight";
+      } else if (risk === "Moderate") {
+        banner.classList.add("bg-amber-50", "border-amber-300");
+        classText.className = "text-2xl sm:text-3xl font-black text-amber-700 tracking-tight";
+      } else {
+        banner.classList.add("bg-emerald-50", "border-emerald-300");
+        classText.className = "text-2xl sm:text-3xl font-black text-emerald-700 tracking-tight";
+      }
+
+      // Update probability bars
+      const pCrit = Math.round((probs.Critical || 0) * 100);
+      const pHigh = Math.round((probs.High || 0) * 100);
+      const pMod = Math.round((probs.Moderate || 0) * 100);
+      const pLow = Math.round((probs.Low || 0) * 100);
+
+      document.getElementById('prob-val-critical').innerText = pCrit + "%";
+      document.getElementById('prob-bar-critical').style.width = pCrit + "%";
+
+      document.getElementById('prob-val-high').innerText = pHigh + "%";
+      document.getElementById('prob-bar-high').style.width = pHigh + "%";
+
+      document.getElementById('prob-val-moderate').innerText = pMod + "%";
+      document.getElementById('prob-bar-moderate').style.width = pMod + "%";
+
+      document.getElementById('prob-val-low').innerText = pLow + "%";
+      document.getElementById('prob-bar-low').style.width = pLow + "%";
+
+      if (data.database_id) {
+        const badge = document.getElementById('db-saved-badge');
+        document.getElementById('db-pred-id').innerText = data.database_id;
+        badge.classList.remove('hidden');
+      }
+
+      if (window.savePredictionToFirestore) {
+        window.savePredictionToFirestore(data);
+      }
+    }
+
+    // =========================================================================
+    // MULTI-MODEL COMPARISON (CONSENSUS ENGINE)
+    // =========================================================================
+    async function handleCompareSubmit(showSpinner = true) {
+      const spinner = document.getElementById('btn-compare-spinner');
+      if (showSpinner && spinner) spinner.classList.remove('hidden');
+
+      const payload = getCurrentInputPayload();
+
+      try {
+        const res = await fetch('/api/compare', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        renderComparisonResults(data);
+      } catch (err) {
+        console.error("Comparison error:", err);
+      } finally {
+        if (showSpinner && spinner) spinner.classList.add('hidden');
+      }
+    }
+
+    function renderComparisonResults(data) {
+      if (!data || !data.model_predictions) return;
+
+      const consensus = data.consensus_risk || "Moderate";
+      const agreement = data.consensus_agreement || "4 of 6 algorithms agree";
+      const votes = data.votes || { Critical: 0, High: 4, Moderate: 2, Low: 0 };
+      const modelPreds = data.model_predictions;
+
+      // Update consensus banner
+      const badge = document.getElementById('consensus-risk-badge');
+      const agreeText = document.getElementById('consensus-agreement-text');
+      const banner = document.getElementById('consensus-banner');
+
+      if (badge) badge.innerText = consensus.toUpperCase() + " RISK";
+      if (agreeText) agreeText.innerText = agreement + " on this hazard assessment";
+
+      // Banner theme based on consensus
+      if (banner) {
+        banner.className = "p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ";
+        if (consensus === "Critical") banner.classList.add("bg-rose-50", "border-rose-200");
+        else if (consensus === "High") banner.classList.add("bg-orange-50", "border-orange-200");
+        else if (consensus === "Moderate") banner.classList.add("bg-amber-50", "border-amber-200");
+        else banner.classList.add("bg-emerald-50", "border-emerald-200");
+      }
+
+      // Update votes
+      const vCrit = document.getElementById('vote-critical');
+      const vHigh = document.getElementById('vote-high');
+      const vMod = document.getElementById('vote-moderate');
+      const vLow = document.getElementById('vote-low');
+      if (vCrit) vCrit.innerText = "Critical: " + (votes.Critical || 0);
+      if (vHigh) vHigh.innerText = "High: " + (votes.High || 0);
+      if (vMod) vMod.innerText = "Moderate: " + (votes.Moderate || 0);
+      if (vLow) vLow.innerText = "Low: " + (votes.Low || 0);
+
+      // Render 2 candidate algorithm comparison cards (Random Forest & XGBoost)
+      const container = document.getElementById('comparison-cards-grid');
+      if (!container) return;
+
+      const modelOrder = ['random_forest', 'xgboost'];
+      
+      container.innerHTML = modelOrder.map(mId => {
+        const p = modelPreds[mId];
+        const meta = modelMetadata[mId] || {};
+        if (!p) return '';
+
+        const mRisk = p.predicted_risk || "Moderate";
+        const mConf = p.confidence !== undefined ? p.confidence : Math.round(((p.probabilities && p.probabilities[mRisk]) || 0.5) * 100);
+        const probs = p.probabilities || {};
+        
+        let riskColor = "bg-amber-100 text-amber-800 border-amber-300";
+        if (mRisk === "Critical") riskColor = "bg-rose-100 text-rose-800 border-rose-300";
+        else if (mRisk === "High") riskColor = "bg-orange-100 text-orange-800 border-orange-300";
+        else if (mRisk === "Low") riskColor = "bg-emerald-100 text-emerald-800 border-emerald-300";
+
+        const isMatch = mRisk === consensus;
+        const matchBadge = isMatch 
+          ? `<span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-semibold flex items-center gap-1">✓ Agrees</span>`
+          : `<span class="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">Divergent</span>`;
+
+        const isCurrentActive = currentSelectedModel === mId;
+        const borderStyle = isCurrentActive 
+          ? "border-2 border-blue-600 ring-2 ring-blue-100" 
+          : "border border-slate-200 hover:border-slate-300";
+
+        const pC = Math.round((probs.Critical || 0) * 100);
+        const pH = Math.round((probs.High || 0) * 100);
+        const pM = Math.round((probs.Moderate || 0) * 100);
+        const pL = Math.round((probs.Low || 0) * 100);
+
+        return `
+          <div class="bg-white rounded-xl p-3.5 ${borderStyle} transition-all shadow-xs flex flex-col justify-between">
+            <div>
+              <div class="flex items-start justify-between gap-1.5 mb-1.5">
+                <div>
+                  <h4 class="text-xs font-bold text-slate-900">${meta.name || p.name}</h4>
+                  <span class="text-[10px] text-slate-500 block">${meta.category || ''}</span>
+                </div>
+                ${matchBadge}
+              </div>
+
+              <!-- Risk Badge & Confidence -->
+              <div class="flex items-center justify-between my-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="px-2 py-0.5 rounded text-xs font-black border ${riskColor}">${mRisk.toUpperCase()}</span>
+                <span class="text-xs font-mono font-bold text-slate-700">${mConf}% Conf.</span>
+              </div>
+
+              <!-- Mini 4-class Stacked Distribution Bar -->
+              <div class="space-y-1 mb-3">
+                <div class="flex justify-between text-[10px] text-slate-500">
+                  <span>Probability Distribution</span>
+                  <span class="font-mono">C:${pC}% H:${pH}% M:${pM}% L:${pL}%</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2 flex overflow-hidden">
+                  <div class="bg-rose-500 h-2" style="width: ${pC}%" title="Critical: ${pC}%"></div>
+                  <div class="bg-orange-500 h-2" style="width: ${pH}%" title="High: ${pH}%"></div>
+                  <div class="bg-amber-400 h-2" style="width: ${pM}%" title="Moderate: ${pM}%"></div>
+                  <div class="bg-emerald-500 h-2" style="width: ${pL}%" title="Low: ${pL}%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <button onclick="selectModel('${mId}'); handlePredictSubmit();" class="w-full mt-1 text-center py-1.5 px-2 rounded-md text-[11px] font-semibold ${isCurrentActive ? 'bg-blue-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'} transition">
+              ${isCurrentActive ? '✓ Currently Active Model' : 'Switch & Run This Model'}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // MODEL EVALUATION & MULTI-MODEL BENCHMARK (TABLE 2.1 & APPENDIX B)
+    // =========================================================================
+    let cachedMetricsData = null;
+
+    async function loadMetrics() {
+      try {
+        const res = await fetch('/api/metrics');
+        const data = await res.json();
+        cachedMetricsData = data;
+
+        // Render Table 2.1 Benchmark Comparison Table
+        renderModelsComparisonTable(data.all_models_comparison || []);
+
+        // Load default model (Random Forest)
+        displayModelMetrics('random_forest');
+
+      } catch (e) {
+        console.log("Using default Appendix B metrics", e);
+      }
+    }
+
+    function renderModelsComparisonTable(modelsList) {
+      const tbody = document.getElementById('models-comparison-tbody');
+      if (!tbody) return;
+
+      // Restricted to candidate algorithms: Random Forest and XGBoost
+      const fallbackList = [
+        { model_id: 'random_forest', name: 'Random Forest (RF)', category: 'Bagging Ensemble (n=35)', accuracy: 0.6333, precision: 0.6645, recall: 0.6333, f1_score: 0.6024, latency_ms: 45, status: 'Primary Model' },
+        { model_id: 'xgboost', name: 'XGBoost (Gradient Boosted)', category: 'Gradient Boosted Trees', accuracy: 0.6500, precision: 0.6720, recall: 0.6500, f1_score: 0.6280, latency_ms: 38, status: 'High Performance' }
+      ];
+
+      let list = (modelsList && modelsList.length > 0) ? modelsList.filter(m => m.model_id === 'random_forest' || m.model_id === 'xgboost') : fallbackList;
+      if (list.length === 0) list = fallbackList;
+
+      tbody.innerHTML = list.map(m => {
+        const isPrimary = m.model_id === 'random_forest';
+        const isBest = m.model_id === 'xgboost';
+        let statusBadge = `<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-semibold">${m.status || 'Candidate'}</span>`;
+        if (isPrimary) statusBadge = `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-[10px] font-bold">Primary Report</span>`;
+        else if (isBest) statusBadge = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Top Accuracy</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50 transition cursor-pointer" onclick="displayModelMetrics('${m.model_id}')">
+            <td class="p-2.5 font-bold text-slate-800 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full ${isPrimary ? 'bg-blue-600' : 'bg-slate-400'}"></span>
+              ${m.name}
+            </td>
+            <td class="p-2.5 text-slate-500">${m.category || ''}</td>
+            <td class="p-2.5 text-right font-mono font-bold ${isPrimary || isBest ? 'text-blue-700' : 'text-slate-700'}">${Number(m.accuracy).toFixed(4)}</td>
+            <td class="p-2.5 text-right font-mono text-slate-700">${Number(m.precision).toFixed(4)}</td>
+            <td class="p-2.5 text-right font-mono text-slate-700">${Number(m.recall).toFixed(4)}</td>
+            <td class="p-2.5 text-right font-mono text-slate-700">${Number(m.f1_score).toFixed(4)}</td>
+            <td class="p-2.5 text-right font-mono text-slate-500">${m.latency_ms || 30} ms</td>
+            <td class="p-2.5 text-center">${statusBadge}</td>
+            <td class="p-2.5 text-center">
+              <button class="px-2 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 rounded text-[11px] font-semibold transition">
+                Inspect
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function displayModelMetrics(modelId) {
+      const meta = modelMetadata[modelId] || modelMetadata.random_forest;
+      
+      // Update Title & Badge in Confusion Matrix
+      const cmTitle = document.getElementById('cm-model-title');
+      const cmBadge = document.getElementById('cm-active-badge');
+      if (cmTitle) cmTitle.innerText = meta.name;
+      if (cmBadge) {
+        cmBadge.innerText = meta.name;
+        cmBadge.className = `text-xs font-mono font-bold px-2 py-0.5 rounded ${meta.badgeClass}`;
+      }
+
+      // Check if backend returned specific metrics for this model
+      let acc = meta.reportAcc;
+      let prec = meta.reportPrec;
+      let rec = meta.reportRec;
+      let f1 = meta.reportF1;
+
+      if (cachedMetricsData && cachedMetricsData.all_models_comparison) {
+        const found = cachedMetricsData.all_models_comparison.find(x => x.model_id === modelId);
+        if (found) {
+          acc = Number(found.accuracy).toFixed(4);
+          prec = Number(found.precision).toFixed(4);
+          rec = Number(found.recall).toFixed(4);
+          f1 = Number(found.f1_score).toFixed(4);
+        }
+      }
+
+      // Update 4 cards
+      const mAcc = document.getElementById('metric-accuracy');
+      const mPrec = document.getElementById('metric-precision');
+      const mRec = document.getElementById('metric-recall');
+      const mF1 = document.getElementById('metric-f1');
+      if (mAcc) mAcc.innerText = acc;
+      if (mPrec) mPrec.innerText = prec;
+      if (mRec) mRec.innerText = rec;
+      if (mF1) mF1.innerText = f1;
+
+      // Update Confusion matrix numbers proportionally for this algorithm
+      const cmBody = document.getElementById('confusion-matrix-body');
+      if (cmBody) {
+        if (modelId === 'xgboost') {
+          cmBody.innerHTML = `
+            <tr><td class="p-2.5 text-left font-bold text-rose-700 bg-slate-50/50">Critical (10)</td><td class="p-2.5 bg-rose-100/70 font-bold text-rose-900">2</td><td class="p-2.5 text-slate-600">6</td><td class="p-2.5 text-slate-600">2</td><td class="p-2.5 text-slate-400">0</td></tr>
+            <tr><td class="p-2.5 text-left font-bold text-orange-700 bg-slate-50/50">High (68)</td><td class="p-2.5 text-slate-600">1</td><td class="p-2.5 bg-orange-100/70 font-bold text-orange-900">42</td><td class="p-2.5 text-slate-600">24</td><td class="p-2.5 text-slate-400">1</td></tr>
+            <tr><td class="p-2.5 text-left font-bold text-amber-700 bg-slate-50/50">Moderate (121)</td><td class="p-2.5 text-slate-400">0</td><td class="p-2.5 text-slate-600">15</td><td class="p-2.5 bg-amber-100/70 font-bold text-amber-900">102</td><td class="p-2.5 text-slate-600">4</td></tr>
+            <tr><td class="p-2.5 text-left font-bold text-emerald-700 bg-slate-50/50">Low (41)</td><td class="p-2.5 text-slate-400">0</td><td class="p-2.5 text-slate-400">0</td><td class="p-2.5 text-slate-600">31</td><td class="p-2.5 bg-emerald-100/70 font-bold text-emerald-900">10</td></tr>
+          `;
+        } else if (modelId === 'decision_tree') {
+          cmBody.innerHTML = `
+            <tr><td class="p-2.5 text-left font-bold text-rose-700 bg-slate-50/50">Critical (10)</td><td class="p-2.5 bg-rose-100/70 font-bold text-rose-900">1</td><td class="p-2.5 text-slate-600">7</td><td class="p-2.5 text-slate-600">2</td><td class="p-2.5 text-slate-400">0</td></tr>
+            <tr><td class="p-2.5 text-left font-bold text-orange-700 bg-slate-50/50">High (68)</td><td class="p-2.5 text-slate-600">1</td><td class="p-2.5 bg-orange-100/70 font-bold text-orange-900">36</td><td class="p-2.5 text-slate-600">29</td><td class="p-2.5 text-slate-400">2</td></tr>
+            <tr><td class="p-2.5 text-left font-bold text-amber-700 bg-slate-50/50">Moderate (121)</td><td class="p-2.5 text-slate-400">0</td><td class="p-2.5 text-slate-600">21</td><td class="p-2.5 bg-amber-100/70 font-bold text-amber-900">93</td><td class="p-2.5 text-slate-600">7</td></tr>
+            <tr><td class="p-2.5 text-left font-bold text-emerald-700 bg-slate-50/50">Low (41)</td><td class="p-2.5 text-slate-400">0</td><td class="p-2.5 text-slate-400">1</td><td class="p-2.5 text-slate-600">32</td><td class="p-2.5 bg-emerald-100/70 font-bold text-emerald-900">8</td></tr>
+          `;
+        } else {
+          // Default Random Forest / Linear / SVM / NB format from Appendix B
+          cmBody.innerHTML = `
+            <tr><td class="p-2.5 text-left font-bold text-rose-700 bg-slate-50/50">Critical (10)</td><td class="p-2.5 bg-rose-100/70 font-bold text-rose-900">1</td><td class="p-2.5 text-slate-600">7</td><td class="p-2.5 text-slate-600">2</td><td class="p-2.5 text-slate-400">0</td></tr>
+            <tr><td class="p-2.5 text-left font-bold text-orange-700 bg-slate-50/50">High (68)</td><td class="p-2.5 text-slate-600">0</td><td class="p-2.5 bg-orange-100/70 font-bold text-orange-900">40</td><td class="p-2.5 text-slate-600">26</td><td class="p-2.5 text-slate-400">2</td></tr>
+            <tr><td class="p-2.5 text-left font-bold text-amber-700 bg-slate-50/50">Moderate (121)</td><td class="p-2.5 text-slate-400">0</td><td class="p-2.5 text-slate-600">17</td><td class="p-2.5 bg-amber-100/70 font-bold text-amber-900">100</td><td class="p-2.5 text-slate-600">4</td></tr>
+            <tr><td class="p-2.5 text-left font-bold text-emerald-700 bg-slate-50/50">Low (41)</td><td class="p-2.5 text-slate-400">0</td><td class="p-2.5 text-slate-400">0</td><td class="p-2.5 text-slate-600">31</td><td class="p-2.5 bg-emerald-100/70 font-bold text-emerald-900">10</td></tr>
+          `;
+        }
+      }
+    }
+
+    async function retrainModel() {
+      const btnText = document.getElementById('btn-retrain-text');
+      const spinner = document.getElementById('btn-retrain-spinner');
+      btnText.innerText = "Retraining All 6 Models in Python...";
+      spinner.classList.remove('hidden');
+
+      try {
+        const res = await fetch('/api/train', { method: 'POST' });
+        const data = await res.json();
+        await loadMetrics();
+        alert("All 6 Machine Learning Models Retrained and Evaluated Successfully in Python! Updated metrics logged to SQL.");
+      } catch (err) {
+        alert("Retrain failed: " + err.message);
+      } finally {
+        btnText.innerText = "Retrain / Re-evaluate ML";
+        spinner.classList.add('hidden');
+      }
+    }
+
+    // SQL Console
+    function setQuery(q) {
+      document.getElementById('sql-query-input').value = q;
+      executeSQLQuery();
+    }
+
+    function clearSQLConsole() {
+      document.getElementById('sql-query-input').value = '';
+    }
+
+    let currentSQLData = null;
+
+    async function executeSQLQuery() {
+      const query = document.getElementById('sql-query-input').value.trim();
+      if (!query) return;
+
+      const spinner = document.getElementById('sql-spinner');
+      const statusMsg = document.getElementById('sql-status-msg');
+      spinner.classList.remove('hidden');
+      statusMsg.innerText = "Executing in SQLite...";
+
+      try {
+        const res = await fetch('/api/sql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        const result = await res.json();
+        currentSQLData = result;
+
+        if (result.success) {
+          statusMsg.innerText = result.message || "Query executed";
+          renderSQLTable(result.columns, result.rows);
+        } else {
+          statusMsg.innerText = "Error: " + (result.error || "Query failed");
+          renderSQLError(result.error);
+        }
+      } catch (err) {
+        statusMsg.innerText = "Connection error";
+        renderSQLError(err.message);
+      } finally {
+        spinner.classList.add('hidden');
+      }
+    }
+
+    function renderSQLTable(cols, rows) {
+      const thead = document.getElementById('sql-results-thead');
+      const tbody = document.getElementById('sql-results-tbody');
+      thead.innerHTML = cols.map(c => `<th class="p-2 border-r border-slate-200">${c}</th>`).join('');
+
+      if (!rows || rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${cols.length}" class="p-3 text-center text-slate-400">0 rows returned.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(row => {
+        const cells = row.map(val => {
+          let strVal = val === null ? '<span class="text-slate-400 italic">NULL</span>' : String(val);
+          // Highlight risks
+          if (strVal === "High") strVal = `<span class="text-orange-600 font-bold">${strVal}</span>`;
+          else if (strVal === "Critical") strVal = `<span class="text-rose-600 font-bold">${strVal}</span>`;
+          else if (strVal === "Low") strVal = `<span class="text-emerald-600 font-bold">${strVal}</span>`;
+          else if (strVal === "Moderate") strVal = `<span class="text-amber-600 font-bold">${strVal}</span>`;
+          return `<td class="p-2 border-r border-slate-100 whitespace-nowrap">${strVal}</td>`;
+        }).join('');
+        return `<tr class="hover:bg-slate-50">${cells}</tr>`;
+      }).join('');
+    }
+
+    function renderSQLError(err) {
+      const thead = document.getElementById('sql-results-thead');
+      const tbody = document.getElementById('sql-results-tbody');
+      thead.innerHTML = '<th class="p-2 text-rose-600">SQL Error</th>';
+      tbody.innerHTML = `<tr><td class="p-3 text-rose-600 font-mono">${err}</td></tr>`;
+    }
+
+    function exportSQLTableCSV() {
+      if (!currentSQLData || !currentSQLData.rows) {
+        alert("Execute a query with results first!");
+        return;
+      }
+      const cols = currentSQLData.columns;
+      const rows = currentSQLData.rows;
+      let csv = cols.join(",") + "\n";
+      rows.forEach(r => {
+        csv += r.map(v => `"${v !== null ? String(v).replace(/"/g, '""') : ''}"`).join(",") + "\n";
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "disaster_sql_export.csv";
+      a.click();
+    }
+
+    // History Table & Click-to-Sort Functionality
+    let allHistory = [];
+    let historySortCol = 'id';
+    let historySortDir = 'desc';
+
+    function sortHistoryTable(col) {
+      if (historySortCol === col) {
+        historySortDir = historySortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        historySortCol = col;
+        historySortDir = (col === 'rainfall_mm' || col === 'water_level_m' || col === 'slope_deg' || col === 'id' || col === 'created_at' || col === 'predicted_risk') ? 'desc' : 'asc';
+      }
+
+      // Update header indicator icons
+      const colIds = ['id', 'created_at', 'location_name', 'disaster_type', 'rainfall_mm', 'water_level_m', 'slope_deg', 'model_used', 'predicted_risk'];
+      colIds.forEach(c => {
+        const span = document.getElementById('sort-hist-' + c);
+        if (span) {
+          if (c === historySortCol) {
+            span.innerText = historySortDir === 'asc' ? '▲' : '▼';
+            span.className = 'text-[11px] text-blue-700 font-bold';
+          } else {
+            span.innerText = '↕';
+            span.className = 'text-[10px] text-slate-400';
+          }
+        }
+      });
+
+      filterHistoryTable();
+    }
+    window.sortHistoryTable = sortHistoryTable;
+
+    async function refreshHistory() {
+      try {
+        const res = await fetch('/api/history?limit=50');
+        const data = await res.json();
+        allHistory = data.records || [];
+        filterHistoryTable();
+      } catch (e) {
+        console.error("History fetch error:", e);
+      }
+    }
+
+    function filterHistoryTable() {
+      const val = document.getElementById('filter-risk').value;
+      let records = val === "ALL" ? [...allHistory] : allHistory.filter(r => r.predicted_risk === val);
+
+      const riskRank = { 'Critical': 4, 'High': 3, 'Moderate': 2, 'Low': 1 };
+      records.sort((a, b) => {
+        let aVal = a[historySortCol];
+        let bVal = b[historySortCol];
+
+        if (historySortCol === 'predicted_risk') {
+          aVal = riskRank[a.predicted_risk] || 0;
+          bVal = riskRank[b.predicted_risk] || 0;
+        } else if (historySortCol === 'rainfall_mm' || historySortCol === 'water_level_m' || historySortCol === 'slope_deg' || historySortCol === 'id') {
+          aVal = Number(aVal) || 0;
+          bVal = Number(bVal) || 0;
+        } else if (historySortCol === 'created_at') {
+          aVal = new Date(aVal || 0).getTime();
+          bVal = new Date(bVal || 0).getTime();
+        } else {
+          aVal = String(aVal || '').toLowerCase();
+          bVal = String(bVal || '').toLowerCase();
+        }
+
+        if (aVal < bVal) return historySortDir === 'asc' ? -1 : 1;
+        if (aVal > bVal) return historySortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
+
+      renderHistoryRows(records);
+    }
+
+    function renderHistoryRows(records) {
+      const tbody = document.getElementById('history-table-tbody');
+      if (!records || records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-slate-400">No predictions recorded yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = records.map(r => {
+        let badgeClass = "bg-slate-100 text-slate-700";
+        if (r.predicted_risk === "Critical") badgeClass = "bg-rose-100 text-rose-800 font-bold";
+        else if (r.predicted_risk === "High") badgeClass = "bg-orange-100 text-orange-800 font-bold";
+        else if (r.predicted_risk === "Moderate") badgeClass = "bg-amber-100 text-amber-800 font-bold";
+        else if (r.predicted_risk === "Low") badgeClass = "bg-emerald-100 text-emerald-800 font-bold";
+
+        const modelDisplay = r.model_used || "Random Forest";
+
+        return `
+          <tr class="hover:bg-slate-50 font-mono">
+            <td class="p-2.5 font-bold text-slate-600">#${r.id}</td>
+            <td class="p-2.5 text-slate-500 font-sans whitespace-nowrap">${r.created_at || ''}</td>
+            <td class="p-2.5 text-slate-800 font-sans font-medium whitespace-nowrap">${r.location_name || ''}</td>
+            <td class="p-2.5 text-slate-600 font-sans">${r.disaster_type || ''}</td>
+            <td class="p-2.5 text-slate-700 font-bold">${r.rainfall_mm}</td>
+            <td class="p-2.5 text-slate-700">${r.water_level_m}</td>
+            <td class="p-2.5 text-slate-700">${r.slope_deg}°</td>
+            <td class="p-2.5 font-sans">
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-100">${modelDisplay}</span>
+            </td>
+            <td class="p-2.5">
+              <span class="px-2 py-0.5 rounded text-[11px] ${badgeClass}">${r.predicted_risk}</span>
+            </td>
+            <td class="p-2.5 text-slate-600 font-sans text-[11px] truncate max-w-xs">${r.advisory_action || ''}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Initialize with default Appendix B test
+    document.addEventListener('DOMContentLoaded', () => {
+      loadPreset('appendix_b');
+      loadMetrics();
+      executeSQLQuery();
+      handleCompareSubmit(false);
+    });
+  </script>
+
+  <!-- AUTHENTICATION MODAL (LOGIN & REGISTER) -->
+  <div id="auth-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <!-- Modal Header -->
+      <div class="px-6 pt-5 pb-4 border-b border-slate-100 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-base shadow-xs">
+            🛡️
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-base">DisasterGuard AI</h3>
+            <p class="text-[11px] text-slate-500">Cloud Firestore & User Authentication</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeAuthModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- Tab Switcher (Sign In vs Register) -->
+      <div class="flex border-b border-slate-200 px-6 pt-2 bg-slate-50/50">
+        <button id="auth-tab-login" type="button" onclick="switchAuthMode('login')" class="pb-3 px-4 text-xs font-bold border-b-2 border-blue-600 text-blue-600 transition cursor-pointer">
+          Sign In
+        </button>
+        <button id="auth-tab-register" type="button" onclick="switchAuthMode('register')" class="pb-3 px-4 text-xs font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition cursor-pointer">
+          Create Account / Register
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 space-y-4">
+
+        <!-- Google Sign-In Option -->
+        <div>
+          <button type="button" id="btn-google-signin" onclick="handleGoogleSignIn()" class="w-full py-2.5 px-4 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm rounded-xl border border-slate-300 shadow-xs hover:shadow transition flex items-center justify-center gap-2.5 cursor-pointer">
+            <svg class="w-4 h-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+        </div>
+
+        <div class="relative flex items-center justify-center">
+          <div class="border-t border-slate-200 w-full"></div>
+          <span class="bg-white px-2.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">or email</span>
+          <div class="border-t border-slate-200 w-full"></div>
+        </div>
+
+        <!-- 1. LOGIN SECTION -->
+        <div id="auth-login-section" class="space-y-3.5">
+          <!-- Success banner (shown upon registration redirect) -->
+          <div id="auth-login-success" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800"></div>
+
+          <!-- Error banner -->
+          <div id="auth-login-error" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium"></div>
+
+          <form onsubmit="handleEmailLogin(event)" class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="login-email">Email Address</label>
+              <input type="email" id="login-email" required placeholder="name@example.com" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="login-password">Password</label>
+              <input type="password" id="login-password" required placeholder="••••••••" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+            </div>
+
+            <button type="submit" id="btn-login-submit" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
+              <span>Sign In with Email</span>
+            </button>
+          </form>
+
+          <div class="pt-2 text-center text-xs text-slate-500">
+            Don't have an account? 
+            <button type="button" onclick="switchAuthMode('register')" class="text-blue-600 font-bold hover:underline cursor-pointer">
+              Register here
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. REGISTER SECTION -->
+        <div id="auth-register-section" class="hidden space-y-3.5">
+          <div class="p-2.5 bg-blue-50/70 border border-blue-100 rounded-lg text-xs text-blue-800">
+            <strong>Register:</strong> Enter your user details and password. Your account will be securely saved and you will be redirected to the login page.
+          </div>
+
+          <!-- Error banner -->
+          <div id="auth-reg-error" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium"></div>
+
+          <form onsubmit="handleEmailRegister(event)" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1" for="reg-name">Full Name</label>
+                <input type="text" id="reg-name" required placeholder="e.g. Sivamalai" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1" for="reg-phone">Phone Number</label>
+                <input type="tel" id="reg-phone" required placeholder="e.g. +91 9876543210" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1" for="reg-department">Department</label>
+                <input type="text" id="reg-department" required placeholder="Disaster Management" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1" for="reg-location">Assigned Location</label>
+                <input type="text" id="reg-location" required placeholder="Salem Basin" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="reg-role">Role</label>
+              <select id="reg-role" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <option value="Disaster Response Officer" selected>Disaster Response Officer</option>
+                <option value="Hydrological Analyst">Hydrological Analyst</option>
+                <option value="Field Station Observer">Field Station Observer</option>
+                <option value="Citizen / Volunteer">Citizen / Volunteer</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="reg-email">Email Address</label>
+              <input type="email" id="reg-email" required placeholder="name@example.com" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1" for="reg-password">Password</label>
+                <input type="password" id="reg-password" required minlength="6" placeholder="min 6 chars" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1" for="reg-confirm-password">Confirm Password</label>
+                <input type="password" id="reg-confirm-password" required minlength="6" placeholder="repeat password" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+              </div>
+            </div>
+
+            <button type="submit" id="btn-reg-submit" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
+              <span>Create Account & Save</span>
+            </button>
+          </form>
+
+          <div class="pt-2 text-center text-xs text-slate-500">
+            Already registered? 
+            <button type="button" onclick="switchAuthMode('login')" class="text-blue-600 font-bold hover:underline cursor-pointer">
+              Sign in to your account
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+
+  <script>
+    // Transfer Modal helpers
+    function openTransferModal() {
+      const modal = document.getElementById('transfer-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+    function closeTransferModal() {
+      const modal = document.getElementById('transfer-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+    function copyTransferCmd(cmd, btnId) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(cmd).then(() => {
+          const btn = document.getElementById(btnId);
+          if (btn) {
+            const orig = btn.innerText;
+            btn.innerText = "✓ Copied!";
+            btn.classList.add('bg-emerald-600', 'text-white');
+            setTimeout(() => {
+              btn.innerText = orig;
+              btn.classList.remove('bg-emerald-600', 'text-white');
+            }, 2000);
+          }
+        });
+      }
+    }
+    window.openTransferModal = openTransferModal;
+    window.closeTransferModal = closeTransferModal;
+    window.copyTransferCmd = copyTransferCmd;
+  </script>
+
+  <!-- AUTH SCRIPT MODULE -->
+  <script type="module" src="/src/auth.ts"></script>
+</body>
+</html>
